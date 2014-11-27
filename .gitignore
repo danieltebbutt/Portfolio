@@ -41,3 +41,9 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Portfolio data
+*.save
+*.txt
+*.csv
+*.cmd
