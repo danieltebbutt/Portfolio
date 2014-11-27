@@ -4,10 +4,10 @@ import operator
 import ftplib
 import webbrowser
 import math
-
+import getpass
 
 filename = "portfolio.html"
-path = "\\danieltebbutt.com\\"
+path = "\\\\192.168.0.13\\Share\\danieltebbutt.com\\"
 destination = "danieltebbutt.com"
 
 dollar_sign=u'\N{dollar sign}'
@@ -373,7 +373,7 @@ def upload():
     outputfile = open("%s\\%s"%(path,filename), 'rb')
 
     session = ftplib.FTP("ftp.%s"%destination)
-    password = raw_input("Password?")
+    password = getpass.getpass("Password?")
     session.login(destination, password)
     session.storbinary("STOR wwwroot\\%s"%filename, outputfile)
     outputfile.close()
