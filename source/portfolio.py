@@ -176,7 +176,7 @@ class portfolio:
         for line in open(".\\data\\portfolio.txt"):
             if transaction.valid(line):
                 tran = transaction(line)
-                if tran.date() <= datetime.date.today():
+                if tran.date <= datetime.date.today():
                     transactions.append(tran)
         return transactions
 
@@ -191,21 +191,21 @@ class portfolio:
     def create_history(self, start_date):
         if self.history == None:
             self.history = {}
-            start_date = self.transactions[0].date()
+            start_date = self.transactions[0].date
             current_day = day(start_date)
         else:
             current_day = self.history[start_date - datetime.timedelta(days=1)].nextday()
         self.history[current_day.date] = current_day
         for transaction in self.transactions:
             # Bring our history up to date
-            if transaction.date() >= current_day.date:
-                while current_day.date < transaction.date():
+            if transaction.date >= current_day.date:
+                while current_day.date < transaction.date:
                     current_day = current_day.nextday()
                     self.history[current_day.date] = current_day
 
                 # Apply this transaction to the current day
                 transaction.apply(current_day)
-            elif transaction.date() >= start_date:
+            elif transaction.date >= start_date:
                 print "ERROR READING TRANSACTIONS: DATES OUT OF ORDER:"
                 print transaction.toString()
                 errors.append("DATE ERROR %s"%transaction.toString())
@@ -369,7 +369,7 @@ class portfolio:
         purchases = []
         for transaction in self.transactions:
             if transaction.action == "BUY":
-                purchases.append(purchase(transaction.stock, transaction.number, transaction.date(), transaction.price))
+                purchases.append(purchase(transaction.stock, transaction.number, transaction.date, transaction.price))
             elif transaction.action in ("INT", "EXDIV"):
                 tocredit = transaction.number
                 for a_purchase in purchases:
@@ -379,7 +379,7 @@ class portfolio:
                 tocredit = transaction.number
                 for a_purchase in purchases:
                     if transaction.stock == a_purchase.share:
-                        tocredit = a_purchase.sell(tocredit, transaction.price, transaction.date())
+                        tocredit = a_purchase.sell(tocredit, transaction.price, transaction.date)
             elif transaction.action == "RIGHTS":
                 numheld = 0
                 tocredit = transaction.number
@@ -742,18 +742,18 @@ class portfolio:
         print
                
     def print_stats(self):
-        total_trade_value = 0
+        total_tradeValue = 0
         num_trades = 0
         comm = 0
         for tran in self.transactions:
-            if tran.trade_value() > 0:
-                total_trade_value += tran.trade_value()
+            if tran.tradeValue() > 0:
+                total_tradeValue += tran.tradeValue()
                 num_trades += 1
                 comm += tran.comm
         print "Number of trades: %d (average %.1f days between trades)"%(num_trades, ((self.today() - self.first_day()).days)/num_trades)
-        print "Average trade value: %s%.2f (tax/commission %s%.2f = %.2f%%)"%(pound_sign, total_trade_value/(num_trades * 100), pound_sign, comm / (num_trades * 100), (100 * comm) / total_trade_value)
+        print "Average trade value: %s%.2f (tax/commission %s%.2f = %.2f%%)"%(pound_sign, total_tradeValue/(num_trades * 100), pound_sign, comm / (num_trades * 100), (100 * comm) / total_tradeValue)
         year_fraction = (365 / float((self.today() - self.first_day()).days))
-        print "Annual turnover: %s%.2f (tax/commission %s%.2f)"%(pound_sign, year_fraction * total_trade_value / 200, pound_sign, year_fraction * comm / 100)
+        print "Annual turnover: %s%.2f (tax/commission %s%.2f)"%(pound_sign, year_fraction * total_tradeValue / 200, pound_sign, year_fraction * comm / 100)
         print
 
     def print_all(self):
@@ -861,18 +861,18 @@ class portfolio:
             print "At year end: %d @ %.6f = %.6f NOK"%(yearend.shares[stock.stock].number, yearend.get_price(stock.stock) / yearend.exchange_rates["NOK"], (yearend.shares[stock.stock].number * yearend.get_price(stock.stock) / yearend.exchange_rates["NOK"]))
             print "Transactions:"
             for transaction in self.transactions:
-                if transaction.stock == stock.stock and transaction.date() < yearenddate:
+                if transaction.stock == stock.stock and transaction.date < yearenddate:
                     if transaction.action == "BUY" or transaction.action == "SELL" or transaction.action == "RIGHTS" or transaction.action == "SCRIP":
-                        print "%s %s %d @ %.6f = %.6f NOK"%(transaction.date(), transaction.action, transaction.number, ((transaction.price + (transaction.comm / transaction.number)) / self.history[transaction.date()].exchange_rates["NOK"]), (transaction.number * transaction.price + transaction.comm) / self.history[transaction.date()].exchange_rates["NOK"])
+                        print "%s %s %d @ %.6f = %.6f NOK"%(transaction.date, transaction.action, transaction.number, ((transaction.price + (transaction.comm / transaction.number)) / self.history[transaction.date].exchange_rates["NOK"]), (transaction.number * transaction.price + transaction.comm) / self.history[transaction.date].exchange_rates["NOK"])
             print "Dividends:"
             divs=0
             div_share_sum=0
             divs_per_share=0
             for transaction in self.transactions:
-                if transaction.stock == stock.stock and transaction.date() >= yearbegindate and transaction.date() < yearenddate and transaction.action == "DIV":
-                    per_share = (transaction.price / self.history[transaction.date()].exchange_rates["NOK"])
+                if transaction.stock == stock.stock and transaction.date >= yearbegindate and transaction.date < yearenddate and transaction.action == "DIV":
+                    per_share = (transaction.price / self.history[transaction.date].exchange_rates["NOK"])
                     div_total = transaction.number * per_share
-                    print "%s %d @ %.6f = %.6f NOK"%(transaction.date(), transaction.number, (transaction.price / self.history[transaction.date()].exchange_rates["NOK"]), div_total)
+                    print "%s %d @ %.6f = %.6f NOK"%(transaction.date, transaction.number, (transaction.price / self.history[transaction.date].exchange_rates["NOK"]), div_total)
                     divs=divs+1
                     div_share_sum = div_share_sum + div_total
                     div_total_sum = div_total_sum + div_total
@@ -890,7 +890,7 @@ class portfolio:
         print "____Shares sold during the year____"
         sold_shares = []
         for transaction in self.transactions:
-            if transaction.date() < yearenddate and transaction.date() > yearbegindate and transaction.action == "SELL" and transaction.stock not in sold_shares:
+            if transaction.date < yearenddate and transaction.date > yearbegindate and transaction.action == "SELL" and transaction.stock not in sold_shares:
                 sold_shares.append(transaction.stock)
         for stock in sold_shares:
             print
@@ -901,14 +901,14 @@ class portfolio:
                 print "None held at start of year"
             print "Transactions:"
             for transaction in self.transactions:
-                if transaction.stock == stock and transaction.date() < yearenddate:
+                if transaction.stock == stock and transaction.date < yearenddate:
                     if transaction.action == "BUY" or transaction.action == "SELL" or transaction.action == "RIGHTS" or transaction.action == "SCRIP":
-                        print "%s %s %d @ %.6f = %.6f NOK"%(transaction.date(), transaction.action, transaction.number, ((transaction.price + (transaction.comm / transaction.number)) / self.history[transaction.date()].exchange_rates["NOK"]), (transaction.number * transaction.price + transaction.comm) / self.history[transaction.date()].exchange_rates["NOK"])
+                        print "%s %s %d @ %.6f = %.6f NOK"%(transaction.date, transaction.action, transaction.number, ((transaction.price + (transaction.comm / transaction.number)) / self.history[transaction.date].exchange_rates["NOK"]), (transaction.number * transaction.price + transaction.comm) / self.history[transaction.date].exchange_rates["NOK"])
             print "Dividends:"
             divs=0
             for transaction in self.transactions:
-                if transaction.stock == stock and transaction.date() >= yearbegindate and transaction.date() < yearenddate and transaction.action == "DIV":
-                    print "%s %d @ %.6f = %.6f NOK"%(transaction.date(), transaction.number, (transaction.price / self.history[transaction.date()].exchange_rates["NOK"]), transaction.number * (transaction.price / self.history[transaction.date()].exchange_rates["NOK"]))
+                if transaction.stock == stock and transaction.date >= yearbegindate and transaction.date < yearenddate and transaction.action == "DIV":
+                    print "%s %d @ %.6f = %.6f NOK"%(transaction.date, transaction.number, (transaction.price / self.history[transaction.date].exchange_rates["NOK"]), transaction.number * (transaction.price / self.history[transaction.date].exchange_rates["NOK"]))
                     divs=divs+1
             if divs == 0:
                 print "(None)"

@@ -27,9 +27,12 @@ class transaction:
         # Pull out all the data we want
         #
         self.stock=parsedline.group('stock')
-        self.day=int(parsedline.group('day'))
-        self.month=int(parsedline.group('month'))
-        self.year=int(parsedline.group('year'))
+        
+        day=int(parsedline.group('day'))
+        month=int(parsedline.group('month'))
+        year=int(parsedline.group('year'))
+        self.date = datetime.date(year, month, day)
+        
         self.number=float(parsedline.group('number'))
         self.action=parsedline.group('action')
         self.price=float(parsedline.group('price'))
@@ -47,7 +50,7 @@ class transaction:
     def valid(line):
         return(TRANSACTION.match(line) != None)
 
-    def trade_value(self):
+    def tradeValue(self):
         if (self.action == "BUY" or self.action == "SELL") and self.stock != "USD":
             return self.number * self.price
         else:
@@ -55,9 +58,7 @@ class transaction:
 
     # Return a nicely-formatted string of this object
     def toString(self):
-        return "%02d/%02d/%d %6s %6s %9.2f @ %9.2f (comm: %4d)"%(self.day,
-                                                               self.month,
-                                                               self.year,
+        return "%s %6s %6s %9.2f @ %9.2f (comm: %4d)"%(self.date.strftime("%d/%m/%y"),
                                                                self.stock,
                                                                self.action,
                                                                self.number,
@@ -66,27 +67,20 @@ class transaction:
 
     def description(self):
         if self.action == "INT":
-            return "%02d/%02d/%d %6s paid interest  of %s%-4.2f"%(self.day,
-                                                              self.month,
-                                                              self.year,
+            return "%s %6s paid interest  of %s%-4.2f"%(self.date.strfime("%d/%m/%y"),
                                                               self.stock,
                                                               pound_sign,
                                                               (self.number * self.price) / 100)
         elif self.action == "EXDIV":
-            return "%02d/%02d/%d %6s paid dividends of %s%-4.2f"%(self.day,
-                                                              self.month,
-                                                              self.year,
+            return "%s %6s paid dividends of %s%-4.2f"%(self.date.strfime("%d/%m/%y"),
                                                               self.stock,
                                                               pound_sign,
                                                               (self.number * self.price) / 100)
 
-    # Date of this transaction
-    def date(self):
-        return datetime.date(self.year, self.month, self.day)
 
     def apply(self, day):
         # Apply a transaction to a particular day
-        assert (day.date == self.date())
+        assert (day.date == self.date)
 
         if self.action == "BUY":
             day.trade_stock(self.stock, self.number, self.price, self.comm)

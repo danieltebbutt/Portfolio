@@ -30,15 +30,15 @@ class investment:
                 name=parsedline.group('name')
                 earliest_date = datetime.date(year = 2050, month = 1, day = 1)
                 for transaction in transactions:
-                    if transaction.date() < earliest_date:
-                        earliest_date = transaction.date()
+                    if transaction.date < earliest_date:
+                        earliest_date = transaction.date
                     if not investments.has_key(transaction.stock) and (transaction.stock == stock):
                         investments[transaction.stock] = investment(stock,
                                                                     sector,
                                                                     assetclass,
                                                                     size,
                                                                     region,
-                                                                    transaction.date(),
+                                                                    transaction.date,
                                                                     estdivi,
                                                                     isin,
                                                                     name)
