@@ -6,7 +6,7 @@ from holding import Holding
 class NewPortfolio:
 
     def __init__(self):
-        self.holdings = {}        
+        self.holdings = {}
 
     def applyTransaction(self, transaction):
         if not transaction.stock in self.holdings:
@@ -14,10 +14,14 @@ class NewPortfolio:
             
         self.holdings[transaction.ticker].applyTransaction(transaction)
         
-    def printSummary(self):
+    def printSummary(self, date, prices):
         cash = 0        
-        for ticker in self.holdings:            
+        for ticker in self.holdings:
             holding = self.holdings[ticker]
-            print holding.toString()
+            if holding.number != 0:
+                if (holding.ticker, date) in prices:
+                    print holding.toString(prices[(holding.ticker, date)])
+                else:
+                    print holding.toString(0)
             cash += holding.cash
         print u"Net invested: \N{pound sign}%.2f"%((0-cash)/100)

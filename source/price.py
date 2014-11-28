@@ -33,7 +33,7 @@ LATEST_PRICES_URL="http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1
 ROK_BANKRUPT=datetime.date(year=2010,month=11,day=8)
 CPT_REDENOMINATED=datetime.date(year=2009,month=7,day=28)
 
-class price:
+class Price:
 
     @staticmethod
     def fixRawPrice(ticker, price):
@@ -43,7 +43,8 @@ class price:
             price *= 100
         if ticker.find("IS15") != -1 and price < 1000:
             price *= 100
-
+        return price
+            
     @staticmethod
     def currentPricesUrl(tickerList):
         portfolioString=""
@@ -54,17 +55,18 @@ class price:
         return url
             
     @staticmethod
-    def loadCurrentPricesFromWeb(tickerList, prices, urlCache)
-        url = currentPricesUrl(tickerList)
+    def loadCurrentPricesFromWeb(tickerList, prices, urlCache):
+        url = Price.currentPricesUrl(tickerList)
         html = urlCache.read_url(url)
-        
+
         for shareData in YAHOOSTOCK.findall(html):
             ticker = shareData[0]
             price = float(shareData[1])
-            price = fixRawPrice(ticker, price)
-            prices[(ticker, datetime.today())] = price
+            price = Price.fixRawPrice(ticker, price)
+            prices[(ticker, datetime.date.today())] = price
+            print "%s %s %.2f"%(ticker, datetime.date.today(), price)
         
-        return price        
+        return prices
         
     # For each investment, get its price history
     def get_price_history(self, start_date, text_mode):
