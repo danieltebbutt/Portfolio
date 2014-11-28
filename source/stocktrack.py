@@ -133,7 +133,6 @@ def command(arg, porty, verbose):
 # MAIN SCRIPT
 #
 #
-
 porty = None
 verbose = False
 trace_enabled = False
@@ -155,4 +154,3 @@ for arg in sys.argv[1:]:
 
     else:
         porty,verbose = command(arg, porty, verbose)
-

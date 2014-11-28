@@ -6,13 +6,25 @@
 import re
 import datetime
 
-TRANSACTION=re.compile('(?P<stock>[\w.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
-                       '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
+TRANSACTION = re.compile('(?P<stock>[\w.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
+                         '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
 
+portfolio = ".\\data\\portfolio.txt"                       
+                       
 dollar_sign=u'\N{dollar sign}'
 pound_sign=u'\N{pound sign}'
                        
 class transaction:
+
+    @staticmethod
+    def readTransactions():
+        transactions = []
+        for line in open(portfolio):
+            if transaction.valid(line):
+                tran = transaction(line)
+                if tran.date <= datetime.date.today():
+                    transactions.append(tran)
+        return transactions
 
     #
     # Create a transaction.
@@ -27,6 +39,7 @@ class transaction:
         # Pull out all the data we want
         #
         self.stock=parsedline.group('stock')
+        self.ticker = self.stock
         
         day=int(parsedline.group('day'))
         month=int(parsedline.group('month'))
@@ -77,7 +90,7 @@ class transaction:
                                                               pound_sign,
                                                               (self.number * self.price) / 100)
 
-
+    # !!
     def apply(self, day):
         # Apply a transaction to a particular day
         assert (day.date == self.date)
@@ -99,3 +112,29 @@ class transaction:
             day.trade_stock(self.stock, self.number, 0, 0)
         else:
             raise Exception("Unrecognized field: %s"%self.action)
+
+    def applyTransaction(self, shares, cash):
+        
+        if self.action == "BUY":
+            shares += self.number
+            cash -= self.number * self.price + self.comm
+        elif self.action == "SELL":
+            shares -= self.number
+            cash += self.number * self.price - self.comm
+        elif self.action == "EXDIV":
+            cash += self.number * self.price
+        elif self.action == "INT":
+            # !!
+            pass
+        elif self.action == "DIV":
+            # No-op - don't care about actual payment
+            pass
+        elif self.action == "RIGHTS":
+            shares += self.number
+            cash -= self.price
+        elif self.action == "SCRIP":
+            shares += self.number
+        else:
+            raise Exception("Unrecognized field: %s"%self.action)
+        return (shares, cash)
+        
