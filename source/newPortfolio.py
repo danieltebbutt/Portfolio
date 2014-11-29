@@ -26,6 +26,9 @@ class NewPortfolio:
             value += holding.currentValue()
         return value
     
+    def contains(self, ticker):
+        return self.holdings[ticker].number > 0
+    
     def printSummary(self):
         cash = 0        
         for holding in self.holdings.values():

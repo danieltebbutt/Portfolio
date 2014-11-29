@@ -4,6 +4,7 @@
 
 import datetime
 import re
+import operator
 
 # REGULAR EXPRESSIONS
 
@@ -13,9 +14,6 @@ YAHOODAY=re.compile('(?P<date>[\d-]+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>
 
 # A line from Yahoo (tracking)
 YAHOOSTOCK=re.compile('\"(?P<stock>[\w.-]+)\",(?P<price>[\d.]+)[, +-/\d:PAM]*')
-
-# A date in Yahoo format
-YAHOODATE=re.compile('(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)')
 
 # A line from oanda.com's exchange rate history
 EXCHANGE=re.compile('(?P<month>\d+)/(?P<day>\d+)/(?P<year>\d+),(?P<rate>[\d.]+)')
@@ -36,7 +34,7 @@ ROK_BANKRUPT=datetime.date(year=2010,month=11,day=8)
 CPT_REDENOMINATED=datetime.date(year=2009,month=7,day=28)
 
 class Price:
-
+    # Methods for fixing problems with the data
     @staticmethod
     def fixRawPrice(ticker, price, priceDate, prices):
         if ticker.find("SLXX") != -1:
@@ -48,7 +46,29 @@ class Price:
         if ticker.find("BRK-B") != -1:
             price *= 100.0 / prices[("USD", priceDate)]
         return price
-            
+
+    @staticmethod
+    def fixPriceGaps(prices): 
+        # Iterate through learning tickers and first and last dates
+        # Iterate through filling in gaps
+        tickers = []
+        dates = {}
+        for (ticker, date) in sorted(prices.keys(), key=operator.itemgetter(1)):
+            if not ticker in tickers:
+                tickers.append(ticker)
+                dates[ticker] = [date, date]
+            if date < dates[ticker][0]:
+                dates[ticker][0] = date
+            elif date > dates[ticker][1]:
+                dates[ticker][1] = date
+        
+        for (ticker, date) in sorted(prices.keys(), key=operator.itemgetter(1)):
+            while dates[ticker][0] < date - datetime.timedelta(days = 1) and dates[ticker][0] < dates[ticker][1]:
+                dates[ticker][0] += datetime.timedelta(days = 1)
+                prices[(ticker, dates[ticker][0])] = prices[(ticker, dates[ticker][0] - datetime.timedelta(days = 1))]
+            dates[ticker][0] = date
+
+# Methods for building URLs            
     @staticmethod
     def currentPricesUrl(tickerList):
         portfolioString=""
@@ -91,6 +111,7 @@ class Price:
 
         return urls
         
+    # Methods for loading and parsing info from the web
     @staticmethod
     def loadCurrentPricesFromWeb(tickerList, prices, urlCache):
         url = Price.currentPricesUrl(tickerList)
@@ -111,9 +132,22 @@ class Price:
             for rate in EXCHANGE.findall(html):
                 currencyDate = datetime.date(int(rate[2]), int(rate[0]), int(rate[1]))
                 prices[(currency, currencyDate)] = float(rate[3])
+
+    @staticmethod                
+    def loadHistoricalPricesFromWeb(ticker, startDate, endDate, prices, urlCache):
+        url = Price.historicalPricesUrl(ticker, startDate, endDate, currency = False)[0]
+        html = urlCache.read_url(url)
+        
+        for line in YAHOODAY.findall(html):
+            priceDate = datetime.datetime.strptime(line[0], "%Y-%m-%d").date()
+            closePrice = float(line[4])
+            closePrice = Price.fixRawPrice(ticker, closePrice, priceDate, prices)
+            prices[(ticker, priceDate)] = closePrice
                 
     # Create a price
     def __init__(self, name, date, price):
         self.name = name
         self.date = date
         self.price = price
+
+        

@@ -16,12 +16,15 @@ from investment import investment
 from urlcache import urlcache
 
 # Cache all URLs that we are going to load from later
-def cacheUrls(tickerList, currencyList, investments, startDate):
+def cacheUrls(tickerList, currencyList, investments, history, startDate):
     urls = []
     urls.append(Price.currentPricesUrl(tickerList))
     
     for currency in currencyList:
         urls.extend(Price.historicalPricesUrl(currency, startDate, datetime.date.today(), currency = True))
+    
+    for ticker in tickerList:
+        urls.extend(Price.historicalPricesUrl(ticker, history.firstHeld(ticker), history.lastHeld(ticker), currency = False))
     
     urlCache = urlcache(urls)
     urlCache.cache_urls()
@@ -47,8 +50,11 @@ for transaction in transactions:
 # Hard code currency list.  !! Should pick these out of investments really.        
 currencyList = ["USD", "Euro", "NOK"]        
 
+# Build a history of our transactions
+history = History(transactions)
+
 # Start reading all the HTML we're going to need now.
-urlCache = cacheUrls(tickerList, currencyList, investments, startDate)
+urlCache = cacheUrls(tickerList, currencyList, investments, history, startDate)
 
 # Load currency histories
 prices = {}
@@ -62,11 +68,14 @@ for currency in currencyList:
 # Load current prices from the Web
 Price.loadCurrentPricesFromWeb(tickerList, prices, urlCache)
 
-# !! Now load historical prices from the Web
+# Now load historical prices from the Web
+for ticker in tickerList:
+    Price.loadHistoricalPricesFromWeb(ticker, history.firstHeld(ticker), history.lastHeld(ticker), prices, urlCache)
 
-# Build a history of our transactions
-history = History(transactions)
+Price.fixPriceGaps(prices)    
 
+
+    
 # Get today's portfolio
 portfolio = history.getPortfolio(datetime.date.today())
 

@@ -19,3 +19,17 @@ class History:
             if transaction.date < date:
                 portfolio.applyTransaction(transaction)
         return portfolio
+        
+    def firstHeld(self, ticker):
+        for transaction in self.transactions:
+            if transaction.ticker == ticker:
+                return transaction.date
+                
+    def lastHeld(self, ticker):
+        if self.getPortfolio(datetime.date.today()).contains(ticker):
+            return datetime.date.today()
+        else:
+            for transaction in reversed(self.transactions):
+                if transaction.ticker == ticker and transaction.action == "SELL":
+                    return transaction.date
+       
