@@ -43,6 +43,8 @@ class Price:
             price *= 100
         if ticker.find("IS15") != -1 and price < 1000:
             price *= 100
+        if ticker.find("BRK-B") != -1:
+            price 
         return price
             
     @staticmethod
@@ -64,7 +66,6 @@ class Price:
             price = float(shareData[1])
             price = Price.fixRawPrice(ticker, price)
             prices[(ticker, datetime.date.today())] = price
-            print "%s %s %.2f"%(ticker, datetime.date.today(), price)
         
         return prices
         

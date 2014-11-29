@@ -48,5 +48,10 @@ history = History(transactions)
 # Get today's portfolio
 portfolio = history.getPortfolio(datetime.date.today())
 
+portfolio.notePrices(datetime.date.today(), prices)
+
 # And dump a quick summary
-portfolio.printSummary(datetime.date.today(), prices)
+portfolio.printSummary()
+
+# List purchases
+portfolio.printPurchases()

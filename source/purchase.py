@@ -1,3 +1,5 @@
+import transaction
+
 class purchase:
 
     def __init__(self,
@@ -27,17 +29,18 @@ class purchase:
         number -= min(number, self.number)
         return number
 
+    def scrip(self, scrip):
+        self.number *= 1 + scrip
+        
     def number_left(self):
         return (self.number - self.number_sold)
 
     def sell(self, number, price, date):
-        if self.share == "GNK.L":
-            print "%.2f, %.2f, %s"%(number, price, date)
         if number > 0.1 and self.number_left() > 0.1:
             self.date_sold.append(date)
             self.sale_price = (self.sale_price * self.number_sold + min(number, self.number_left()) * price) / (self.number_sold + min(number, self.number_left()))
             self.number_sold += min(number, (self.number_left()))
-            number -= min(number, self.number)
+            number -= min(number, self.number_left())
         return number
 
     def note_price(self, price):
@@ -59,8 +62,6 @@ class purchase:
         if self.number_sold > 0:
             if self.number_left() > 0.1:
                 verb = "sold/now"
-                print "%.2f, %.2f"%(self.number_sold, self.number_left())
-
             else:
                 verb = "sold"
         else:
@@ -69,8 +70,8 @@ class purchase:
 
     def credit_rights(self, dilution, price):
         self.purchase_price = (self.purchase_price * self.number + self.number * dilution * price) / (self.number * (1 + dilution))
-        self.number *= (1 + dilution)
-
+        self.number = self.number_left() * (1 + dilution) + self.number_sold
+        
     def closing_price(self):
         if self.number_sold > 0.1:
             if self.number_left() > 0.1:
@@ -80,3 +81,13 @@ class purchase:
         else:
             price = self.value_now
         return price
+
+    def toString(self):
+        return "%6.2f%% %6s Bought @ %9.2f %12s %9.2f earned %6.2f"%(\
+               self.percent_profit(), 
+               self.share, 
+               self.purchase_price, 
+               self.verb(), 
+               self.closing_price(), 
+               self.dividends_received)
+        

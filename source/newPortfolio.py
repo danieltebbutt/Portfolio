@@ -14,14 +14,25 @@ class NewPortfolio:
             
         self.holdings[transaction.ticker].applyTransaction(transaction)
         
-    def printSummary(self, date, prices):
+    def notePrices(self, date, prices):
+        for ticker in self.holdings:
+            holding = self.holdings[ticker]
+            if (holding.ticker, date) in prices:
+                holding.notePrice(date, prices[(holding.ticker, date)])                    
+     
+    def printSummary(self):
         cash = 0        
         for ticker in self.holdings:
             holding = self.holdings[ticker]
-            if holding.number != 0:
-                if (holding.ticker, date) in prices:
-                    print holding.toString(prices[(holding.ticker, date)])
-                else:
-                    print holding.toString(0)
+            if holding.number != 0:              
+                print holding.toString()
             cash += holding.cash
         print u"Net invested: \N{pound sign}%.2f"%((0-cash)/100)
+        
+    def printPurchases(self):
+        purchases = []
+        for ticker in self.holdings:
+            holding = self.holdings[ticker]
+            purchases.extend(holding.purchases)
+        for purchase in reversed(sorted(purchases, key=lambda purchase: purchase.percent_profit())):
+            print purchase.toString()

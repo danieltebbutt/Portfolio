@@ -1,6 +1,7 @@
 # A holding is an individual shareholding
 
 from transaction import transaction
+from purchase import purchase
 
 class Holding:
 
@@ -8,15 +9,46 @@ class Holding:
         self.ticker = ticker
         self.number = 0
         self.cash = 0
-        self.previousHoldings = []
+        self.purchases = []
+        self.price = 0
 
     def applyTransaction(self, transaction):
+        # First apply the transaction to the list of purchases
+        if transaction.action == "BUY":
+            self.purchases.append(purchase(transaction.ticker, transaction.number, transaction.date, transaction.price))
+        elif transaction.action == "INT" or transaction.action == "DIV":
+            pass
+        elif transaction.action == "RIGHTS":
+            # Applied in proportion to the current share numbers in each purchase
+            for item in self.purchases:
+                item.credit_rights(transaction.number / self.number, transaction.price)
+        elif transaction.action == "EXDIV":
+            # Again, applied in proportion to purchases
+            for item in self.purchases:
+                if item.number > 0:
+                    item.dividend(self.number, transaction.price)
+        elif transaction.action == "SCRIP":
+            for item in self.purchases:
+                item.scrip(transaction.number / self.number)
+        elif transaction.action == "SELL":
+            # Apply to recent purchases first.
+            number = transaction.number
+            for item in reversed(self.purchases):
+                number = item.sell(number, transaction.price, transaction.date)
+            
+        # Now apply it to the entire holding
         (self.number, self.cash) = transaction.applyTransaction(self.number, self.cash)
 
-    def toString(self, price):
+    def notePrice(self, date, price):
+        self.price = price
+        for purchase in self.purchases:
+            purchase.note_price(price)
+        
+    def toString(self):        
         return u"%8d %6s, net cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
                self.number, 
                self.ticker, 
                (0 - self.cash) / 100, 
-               (self.number * price) / 100,
-               ((self.number * price) + self.cash) / 100)
+               (self.number * self.price) / 100,
+               ((self.number * self.price) + self.cash) / 100)
+    

@@ -113,8 +113,7 @@ class transaction:
         else:
             raise Exception("Unrecognized field: %s"%self.action)
 
-    def applyTransaction(self, shares, cash):
-        
+    def applyTransaction(self, shares, cash):        
         if self.action == "BUY":
             shares += self.number
             cash -= self.number * self.price + self.comm
