@@ -27,7 +27,9 @@ OTHERASSET=re.compile('(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s
 TEXTSAVE=re.compile('(?P<stock>[\w.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
 
 # PRICE SOURCES
-LATEST_PRICES_URL="http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"
+LATEST_PRICES_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"
+HISTORICAL_SHARE_PRICE_URL = "http://ichart.finance.yahoo.com/table.csv?s=%s&a=%d&b=%d&c=%d&d=%d&e=%d&f=%d&g=d&ignore=.csv"
+HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/convert/fxhistory?date_fmt=us&date=%d/%d/%d&date1=%d/%d/%d&exch=GBP&expr=%s&lang=en&margin_fixed=0&format=CSV&redirected=1"
 
 # MODIFICATIONS
 ROK_BANKRUPT=datetime.date(year=2010,month=11,day=8)
@@ -55,7 +57,40 @@ class Price:
         
         url = LATEST_PRICES_URL % portfolioString
         return url
-            
+
+    @staticmethod
+    def historicalPricesUrl(ticker, startDate, lastDate, currency = False):
+        urls = []
+        if not currency:
+            urls.append(HISTORICAL_SHARE_PRICE_URL%(
+                        ticker, 
+                        startDate.month - 1, 
+                        startDate.day, 
+                        startDate.year,
+                        lastDate.month - 1, 
+                        lastDate.day, 
+                        lastDate.year))
+        else:
+            while startDate < lastDate:
+                # Can't get more than 500 days in one GET from oanda
+                if (lastDate - startDate) > datetime.timedelta(days=490):
+                    nextDate = startDate + datetime.timedelta(days=490)
+                else:
+                    nextDate = lastDate
+                    
+                fixedTicker = "EUR" if ticker == "Euro" else ticker
+                urls.append(HISTORICAL_CURRENCY_PRICE_URL%(
+                            nextDate.month, 
+                            nextDate.day, 
+                            (nextDate.year%100),
+                            startDate.month, 
+                            startDate.day, 
+                            (startDate.year%100),
+                            fixedTicker))
+                startDate = nextDate
+
+        return urls
+        
     @staticmethod
     def loadCurrentPricesFromWeb(tickerList, prices, urlCache):
         url = Price.currentPricesUrl(tickerList)

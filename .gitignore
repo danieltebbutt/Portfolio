@@ -47,5 +47,6 @@ Temporary Items
 *.txt
 *.csv
 *.cmd
-tmpfile1
+tmpfile*
 *.pyc
+
