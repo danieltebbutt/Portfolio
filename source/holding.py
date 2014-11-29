@@ -43,12 +43,15 @@ class Holding:
         self.price = price
         for purchase in self.purchases:
             purchase.note_price(price)
-        
+    
+    def currentValue(self):
+        return (self.number * self.price) / 100
+    
     def toString(self):        
         return u"%8d %6s, net cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
                self.number, 
                self.ticker, 
                (0 - self.cash) / 100, 
-               (self.number * self.price) / 100,
+               self.currentValue(),
                ((self.number * self.price) + self.cash) / 100)
     

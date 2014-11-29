@@ -36,7 +36,7 @@ CPT_REDENOMINATED=datetime.date(year=2009,month=7,day=28)
 class Price:
 
     @staticmethod
-    def fixRawPrice(ticker, price):
+    def fixRawPrice(ticker, price, priceDate, prices):
         if ticker.find("SLXX") != -1:
             price *= 100
         if ticker.find("CPT") != -1:
@@ -44,7 +44,7 @@ class Price:
         if ticker.find("IS15") != -1 and price < 1000:
             price *= 100
         if ticker.find("BRK-B") != -1:
-            price 
+            price *= 100.0 / prices[("USD", priceDate)]
         return price
             
     @staticmethod
@@ -64,51 +64,19 @@ class Price:
         for shareData in YAHOOSTOCK.findall(html):
             ticker = shareData[0]
             price = float(shareData[1])
-            price = Price.fixRawPrice(ticker, price)
+            price = Price.fixRawPrice(ticker, price, datetime.date.today(), prices)
             prices[(ticker, datetime.date.today())] = price
         
         return prices
-        
-    # For each investment, get its price history
-    def get_price_history(self, start_date, text_mode):
-        if not text_mode:
-            url = ""
-            pools={}
-            pool=0
-            for stock in self.investments.keys():
-                stockdate = self.investments[stock].first_purchased
-                if start_date > stockdate:
-                    stockdate = start_date
-                if self.investments[stock].assetclass != "Currency":
-                    url = self.investments[stock].history_url(start_date, datetime.date.today() - datetime.timedelta(days=1))[0]
-                    html = self.urlcache.read_url(url)
-                    for daysdata in YAHOODAY.findall(html):
-                        date=daysdata[0]
-                        closeprice=float(daysdata[4])
-                        stockdate = datetime.date(int(YAHOODATE.match(date).group('year')), \
-                                                  int(YAHOODATE.match(date).group('month')), \
-                                                  int(YAHOODATE.match(date).group('day')))
-                        if stock.find("IS15") == -1:
-                            if stock.find("RBS") != -1:
-                                closeprice = closeprice / 100;
-                            self.history[stockdate].note_price(stock, closeprice)
-        else:
-            for line in open(".\\data\\save.csv"):
-                parsedline = TEXTSAVE.match(line)
-                if parsedline != None:
-                    stock=parsedline.group('stock')
-                    price=float(parsedline.group('price'))
-                    date=datetime.date(int(parsedline.group('year')), \
-                                       int(parsedline.group('month')), \
-                                       int(parsedline.group('day')))
-                    self.history[date].note_real_price(stock, price)
 
-    def loadFromLocalCSV(prices):
-        
-        
-    
-        return prices
-
+    @staticmethod        
+    def getCurrencyHistory(currency, startDate, prices, urlCache, urls):
+        for url in urls:
+            html = urlCache.read_url(url)
+            for rate in EXCHANGE.findall(html):
+                currencyDate = datetime.date(int(rate[2]), int(rate[0]), int(rate[1]))
+                prices[(currency, currencyDate)] = float(rate[3])
+                
     # Create a price
     def __init__(self, name, date, price):
         self.name = name

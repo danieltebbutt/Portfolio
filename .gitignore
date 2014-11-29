@@ -48,3 +48,4 @@ Temporary Items
 *.csv
 *.cmd
 tmpfile1
+*.pyc
