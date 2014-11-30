@@ -21,8 +21,9 @@ EXCHANGE=re.compile('(?P<month>\d+)/(?P<day>\d+)/(?P<year>\d+),(?P<rate>[\d.]+)'
 # A line from OtherAssets.txt
 OTHERASSET=re.compile('(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s+(?P<date>\d+/\d+/\d+)\s+(?P<change>[\d.]+)\s*\n')
 
-# A line from save.csv
-TEXTSAVE=re.compile('(?P<stock>[\w.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
+# save.csv
+LOCAL_PRICES = ".\\data\\save.csv"
+TEXTSAVE=re.compile('(?P<ticker>[\w.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
 
 # PRICE SOURCES
 LATEST_PRICES_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"
@@ -134,7 +135,7 @@ class Price:
                 prices[(currency, currencyDate)] = float(rate[3])
 
     @staticmethod                
-    def loadHistoricalPricesFromWeb(ticker, startDate, endDate, prices, urlCache):
+    def loadHistoricalPricesFromWeb(ticker, startDate, endDate, prices, urlCache):          
         url = Price.historicalPricesUrl(ticker, startDate, endDate, currency = False)[0]
         html = urlCache.read_url(url)
         
@@ -143,7 +144,30 @@ class Price:
             closePrice = float(line[4])
             closePrice = Price.fixRawPrice(ticker, closePrice, priceDate, prices)
             prices[(ticker, priceDate)] = closePrice
-                
+
+    # For each investment, get its price history
+    @staticmethod
+    def loadHistoricalPricesFromDisk(prices):
+        for line in open(LOCAL_PRICES):
+            parsedline = TEXTSAVE.match(line)
+            if parsedline != None:
+                ticker = parsedline.group('ticker')
+                price = float(parsedline.group('price'))
+                date = datetime.date(int(parsedline.group('year')), \
+                                     int(parsedline.group('month')), \
+                                     int(parsedline.group('day')))
+                prices[(ticker, date)] = price
+            
+    @staticmethod
+    def lastDates(prices, tickerList):
+        toReturn = {}
+        foundAlready = []
+        for price in reversed(sorted(prices.keys())):
+            if not price[0] in foundAlready:
+                foundAlready.append(price[0])
+                toReturn[price[0]] = price[1]
+        return toReturn
+            
     # Create a price
     def __init__(self, name, date, price):
         self.name = name
