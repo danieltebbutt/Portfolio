@@ -80,12 +80,12 @@ class transaction:
 
     def description(self):
         if self.action == "INT":
-            return "%s %6s paid interest  of %s%-4.2f"%(self.date.strfime("%d/%m/%y"),
+            return "%s %6s paid interest  of %s%-4.2f"%(self.date.strftime("%d/%m/%y"),
                                                               self.stock,
                                                               pound_sign,
                                                               (self.number * self.price) / 100)
         elif self.action == "EXDIV":
-            return "%s %6s paid dividends of %s%-4.2f"%(self.date.strfime("%d/%m/%y"),
+            return "%s %6s paid dividends of %s%-4.2f"%(self.date.strftime("%d/%m/%y"),
                                                               self.stock,
                                                               pound_sign,
                                                               (self.number * self.price) / 100)

@@ -7,6 +7,7 @@
 #
 
 import datetime
+from screenOutput import screenOutput
 
 from price import Price
 from transaction import transaction
@@ -74,20 +75,22 @@ for ticker in tickerList:
 
 Price.fixPriceGaps(prices)    
 
-
+history.notePrices(prices)
     
 # Get today's portfolio
 portfolio = history.getPortfolio(datetime.date.today())
-
-portfolio.notePrices(datetime.date.today(), prices)
-
-
-
-
 
 # And dump a quick summary
 portfolio.printSummary()
 
 # List purchases
 portfolio.printPurchases()
+
+# Get a previous day's portfolio
+portfolio_start_2014 = history.getPortfolio(datetime.date(year = 2014, month = 1, day = 1))
+
+portfolio_start_2014.printSummary()
+
+screenOutput.printIncome(transactions)
+
 
