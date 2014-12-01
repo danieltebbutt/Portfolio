@@ -96,9 +96,14 @@ def createHistory():
     for ticker in tickerInfo:
         Price.loadHistoricalPricesFromWeb(ticker[0], ticker[1], ticker[2], prices, urlCache)
 
+    # Fill in any gaps
     Price.fixPriceGaps(prices)    
 
+    # Give the prices to our history
     history.notePrices(prices)
+
+    # Done with all the HTML that we read
+    urlCache.clean_urls()
 
     return history
     
@@ -106,6 +111,8 @@ def createHistory():
 #
 # Main code
 #    
+
+# Create the complete portfolio history
 history = createHistory()
 
 # Get today's portfolio
