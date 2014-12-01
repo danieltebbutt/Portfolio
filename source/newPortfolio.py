@@ -5,8 +5,9 @@ from holding import Holding
 
 class NewPortfolio:
 
-    def __init__(self):
+    def __init__(self, date):
         self.holdings = {}
+        self.date = date
 
     def applyTransaction(self, transaction):
         if not transaction.stock in self.holdings:
@@ -14,11 +15,11 @@ class NewPortfolio:
             
         self.holdings[transaction.ticker].applyTransaction(transaction)
         
-    def notePrices(self, date, prices):
+    def notePrices(self, prices):
         for ticker in self.holdings:
             holding = self.holdings[ticker]
-            if (holding.ticker, date) in prices:
-                holding.notePrice(date, prices[(holding.ticker, date)])                    
+            if (holding.ticker, self.date) in prices:
+                holding.notePrice(prices[(holding.ticker, self.date)])                    
     
     def value(self):
         value = 0
@@ -29,18 +30,12 @@ class NewPortfolio:
     def contains(self, ticker):
         return self.holdings[ticker].number > 0
     
-    def printSummary(self):
+    def cash(self):
         cash = 0        
         for holding in self.holdings.values():
-            if holding.number != 0:              
-                print holding.toString()
             cash += holding.cash
-        print u"Net invested:  \N{pound sign}%.2f"%((0-cash)/100)
-        print u"Current value: \N{pound sign}%.2f"%self.value()
+        return cash
         
-    def printPurchases(self):
-        purchases = []
-        for holding in self.holdings.values():
-            purchases.extend(holding.purchases)
-        for purchase in reversed(sorted(purchases, key=lambda purchase: purchase.percent_profit())):
-            print purchase.toString()
+    def netInvested(self):
+        return (0 - self.cash())
+        

@@ -15,11 +15,11 @@ class History:
         self.prices = {}
 
     def getPortfolio(self, date):
-        portfolio = NewPortfolio()
+        portfolio = NewPortfolio(date)
         for transaction in self.transactions:
             if transaction.date < date:
                 portfolio.applyTransaction(transaction)
-        portfolio.notePrices(date, self.prices)
+        portfolio.notePrices(self.prices)
         return portfolio
         
     def firstHeld(self, ticker):

@@ -22,9 +22,6 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
     urls.append(Price.currentPricesUrl(tickerList))
     
     lastDates = Price.lastDates(prices, currencyList + tickerList)
-    for ticker in lastDates:
-        print ticker, lastDates[ticker]
-    
     for ticker in currencyList + tickerList:
         if ticker not in lastDates:
             lastDates[ticker] = startDate
@@ -113,22 +110,25 @@ def createHistory():
 #    
 
 # Create the complete portfolio history
+print "Building portfolio history..."
 history = createHistory()
+print "Done"
+print ""
 
 # Get today's portfolio
 portfolio = history.getPortfolio(datetime.date.today())
 
 # And dump a quick summary
-portfolio.printSummary()
+screenOutput.portfolioSummary(portfolio)
 
 # List purchases
-portfolio.printPurchases()
+screenOutput.portfolioPurchases(portfolio)
 
 # Get a previous day's portfolio
 portfolio_start_2014 = history.getPortfolio(datetime.date(year = 2014, month = 1, day = 1))
 
-portfolio_start_2014.printSummary()
+screenOutput.portfolioSummary(portfolio_start_2014)
 
-screenOutput.printIncome(history.transactions)
+screenOutput.income(history.transactions)
 
 

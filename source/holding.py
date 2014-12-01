@@ -39,19 +39,46 @@ class Holding:
         # Now apply it to the entire holding
         (self.number, self.cash) = transaction.applyTransaction(self.number, self.cash)
 
-    def notePrice(self, date, price):
+    def notePrice(self, price):
         self.price = price
         for purchase in self.purchases:
             purchase.note_price(price)
     
     def currentValue(self):
-        return (self.number * self.price) / 100
+        return (self.number * self.price)
+    
+    def activePurchases(self):
+        active = []
+        for purchase in self.purchases:
+            if purchase.number_left() > 0:
+                active.append(purchase)
+        return active
     
     def toString(self):        
         return u"%8d %6s, net cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
                self.number, 
                self.ticker, 
                (0 - self.cash) / 100, 
-               self.currentValue(),
+               self.currentValue() / 100,
                ((self.number * self.price) + self.cash) / 100)
     
+    def activeCost(self):
+        cost = 0
+        for purchase in self.activePurchases():
+            cost += purchase.size()
+        return cost
+        
+    def activeProfit(self):
+        profit = 0
+        for purchase in self.activePurchases():
+            profit += purchase.absolute_profit()
+        return profit
+        
+    def toStringActive(self):
+        return u"%8d %6s, cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
+               self.number, 
+               self.ticker, 
+               self.activeCost() / 100, 
+               self.currentValue() / 100,
+               self.activeProfit() / 100)
+        
