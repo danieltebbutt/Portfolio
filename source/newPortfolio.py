@@ -39,3 +39,9 @@ class NewPortfolio:
     def netInvested(self):
         return (0 - self.cash())
         
+    def currentTickers(self):
+        current = []
+        for ticker, holding in self.holdings.iteritems():
+            if holding.number > 0:
+                current.append(ticker)
+        return current                

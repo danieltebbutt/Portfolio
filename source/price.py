@@ -159,6 +159,16 @@ class Price:
                 prices[(ticker, date)] = price
             
     @staticmethod
+    def savePricesToDisk(prices):
+        # What are we missing?
+        alreadyOnDisk = {}
+        Price.loadHistoricalPricesFromDisk(alreadyOnDisk)
+        
+        with open(LOCAL_PRICES, 'a') as file:
+            for item in set(prices) - set(alreadyOnDisk):
+                file.write("%s,%s,%s\n"%(item[0],item[1].strftime("%Y-%m-%d"),prices[item]))                   
+            
+    @staticmethod
     def lastDates(prices, tickerList):
         toReturn = {}
         foundAlready = []

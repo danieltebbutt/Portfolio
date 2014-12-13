@@ -37,3 +37,6 @@ class History:
        
     def notePrices(self, prices):
         self.prices = prices
+        
+    def currentTickers(self):
+        return self.getPortfolio(datetime.date.today()).currentTickers()

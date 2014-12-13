@@ -29,7 +29,7 @@ class urlcache:
 
     def __init__(self, urls):
         self.urls = urls
-
+        
     def add_url(self, url):
         self.urls.append(url)
 

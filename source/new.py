@@ -6,7 +6,10 @@
 # Copyright 2008 Daniel Tebbutt
 #
 
-import datetime
+import sys
+from datetime import datetime
+from datetime import date
+from datetime import timedelta
 from screenOutput import screenOutput
 
 from price import Price
@@ -19,7 +22,7 @@ from urlcache import urlcache
 # Cache all URLs that we are going to load from later
 def cacheUrls(tickerList, currencyList, investments, history, startDate, prices):
     urls = []
-    urls.append(Price.currentPricesUrl(tickerList))
+    urls.append(Price.currentPricesUrl(history.currentTickers()))
     
     lastDates = Price.lastDates(prices, currencyList + tickerList)
     for ticker in currencyList + tickerList:
@@ -30,16 +33,16 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
     tickerInfo = []
     
     for currency in currencyList:
-        if datetime.date.today() > lastDates[currency]:
+        if date.today() > lastDates[currency]:
             url = Price.historicalPricesUrl(currency, 
                                             lastDates[currency], 
-                                            datetime.date.today(), 
+                                            date.today(), 
                                             currency = True)
             urls.extend(url)
             currencyInfo.append((currency, lastDates[currency], url))
     
     for ticker in tickerList:
-        if history.lastHeld(ticker) - datetime.timedelta(days = 1) > lastDates[ticker]:
+        if history.lastHeld(ticker) - timedelta(days = 1) > lastDates[ticker]:
             url = Price.historicalPricesUrl(ticker, 
                                             max(lastDates[ticker], history.firstHeld(ticker)), 
                                             history.lastHeld(ticker), 
@@ -87,7 +90,7 @@ def createHistory():
                                  currency[2])
 
     # Load current prices from the Web
-    Price.loadCurrentPricesFromWeb(tickerList, prices, urlCache)
+    Price.loadCurrentPricesFromWeb(history.currentTickers(), prices, urlCache)
 
     # Now load historical prices from the Web
     for ticker in tickerInfo:
@@ -102,12 +105,64 @@ def createHistory():
     # Done with all the HTML that we read
     urlCache.clean_urls()
 
+    # Now save any new data to disk
+    Price.savePricesToDisk(prices)
+    
     return history
     
+def interactive():
+    while True:
+        cmd = raw_input("> ")
+        runCommand(cmd)
+       
+def help():
+    for command in commands:
+        print command
+
+def compare(startDateString, endDateString = ""):
+    startDate = datetime.strptime(startDateString, "%Y-%m-%d")
+    if endDateString:
+        endDate = datetime.strptime(endDateString, "%Y-%m-%d")
+    else:
+        endDate = date.today()
+        
+    startPortfolio = history.getPortfolio(startDate)
+    endPortfolio = history.getPortfolio(endDate)
+        
     
+        
+def runCommand(command):    
+    substrings = command.split()
+    if substrings[0].lower() in commands:        
+        commands[substrings[0].lower()](*substrings[1:])
+    else:
+        print "Command unrecognized"
+
+def printSummary():
+    screenOutput.portfolioSummary(portfolio)
+    screenOutput.portfolioPurchases(portfolio)
+
+def income():
+    screenOutput.income(history.transactions)
+        
 #
 # Main code
 #    
+commands = {
+    "interactive" : interactive,
+    "exit" : sys.exit,        
+    "help" : help,
+    "print" : printSummary,
+    "income" : income,
+    "compare" : compare,
+}
+
+# TODO:
+# Publish to web
+# Portfolio yield
+# Capital gains
+# Compare dates
+# Tax
 
 # Create the complete portfolio history
 print "Building portfolio history..."
@@ -116,19 +171,9 @@ print "Done"
 print ""
 
 # Get today's portfolio
-portfolio = history.getPortfolio(datetime.date.today())
+portfolio = history.getPortfolio(date.today())
 
-# And dump a quick summary
-screenOutput.portfolioSummary(portfolio)
-
-# List purchases
-screenOutput.portfolioPurchases(portfolio)
-
-# Get a previous day's portfolio
-portfolio_start_2014 = history.getPortfolio(datetime.date(year = 2014, month = 1, day = 1))
-
-screenOutput.portfolioSummary(portfolio_start_2014)
-
-screenOutput.income(history.transactions)
-
-
+# Parse command line args
+for command in sys.argv[1:]:
+    runCommand(command)
+    
