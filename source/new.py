@@ -158,6 +158,9 @@ def printSummary():
 def income():
     screenOutput.income(history.transactions)
         
+def capitalGain():
+    screenOutput.capitalGain(portfolio)        
+        
 #
 # Main code
 #    
@@ -168,13 +171,13 @@ commands = {
     "print" : printSummary,
     "income" : income,
     "compare" : compare,
+    "capital" : capitalGain,
 }
 
 # TODO:
 # Publish to web
 # Portfolio yield
 # Capital gains
-# Compare dates
 # Tax
 
 # Create the complete portfolio history

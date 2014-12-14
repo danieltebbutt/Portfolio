@@ -20,6 +20,7 @@ class purchase:
         self.sale_price = sale_price
         self.value_now = value_now
         self.dividends_received = dividends_received
+        self.ticker = share
 
     def size(self):
         return self.number * self.purchase_price
@@ -92,3 +93,5 @@ class purchase:
                self.closing_price(), 
                self.dividends_received)
         
+    def capitalGain(self):
+        return (self.closing_price() - self.purchase_price) * self.number_left()

@@ -79,3 +79,19 @@ class screenOutput:
         print u"Basis for return: \N{pound sign}%.2f"%(basisForReturn)
         print u"Percentage return on investment: %.2f%%"%(100 * totalProfit / basisForReturn)
         
+    @staticmethod
+    def capitalGain(portfolio):
+        purchases = []
+        for holding in portfolio.holdings.values():
+            purchases.extend(holding.activePurchases())
+        gain = 0
+        loss = 0
+        for purchase in purchases:
+            print u"%6s \N{pound sign}%8.2f"%(purchase.ticker, purchase.capitalGain() / 100)
+            if purchase.capitalGain() > 0:
+                gain += purchase.capitalGain() / 100
+            else:
+                loss += purchase.capitalGain() / 100
+        print
+        print u"Gain   \N{pound sign}%8.2f"%(gain)
+        print u"Loss   \N{pound sign}%8.2f"%(loss)
