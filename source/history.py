@@ -41,3 +41,27 @@ class History:
     def currentTickers(self):
         return self.getPortfolio(datetime.date.today()).currentTickers()
         
+    def basisForReturn(self, startDate, endDate):
+        # Get a portfolio for the start of the period
+        portfolio = self.getPortfolio(startDate) 
+        currentDate = startDate
+        numerator = 0
+        
+        # We want the average net invested over the period, but must include
+        # any accumulated profit at the start date
+        modifier = portfolio.value() - portfolio.netInvested()
+        for transaction in self.transactions:
+            while currentDate < transaction.date and currentDate < endDate:
+                numerator += portfolio.netInvested() + modifier
+                currentDate += datetime.timedelta(days = 1)
+            if transaction.date > endDate:
+                break
+            if transaction.date >= startDate:
+                portfolio.applyTransaction(transaction)
+        
+        # If we've run out of transactions then spin forwards to the end of the period.
+        while currentDate < endDate:
+            numerator += portfolio.netInvested() + modifier
+            currentDate += datetime.timedelta(days = 1)
+                    
+        return numerator / ((endDate - startDate).days)

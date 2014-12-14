@@ -141,12 +141,8 @@ def compare(startDateString, endDateString = ""):
         return
     elif endDate > date.today():
         endDate = date.today()
-
-    # Get start and end portfolios and diff them    
-    startPortfolio = history.getPortfolio(startDate)
-    endPortfolio = history.getPortfolio(endDate)
     
-    screenOutput.portfolioDiff(startPortfolio, endPortfolio)
+    screenOutput.portfolioDiff(startDate, endDate, history)
         
 def runCommand(command):    
     substrings = command.split()

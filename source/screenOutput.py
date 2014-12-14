@@ -41,8 +41,10 @@ class screenOutput:
         print
         
     @staticmethod
-    def portfolioDiff(startPortfolio, endPortfolio):
-        
+    def portfolioDiff(startDate, endDate, history):        
+        startPortfolio = history.getPortfolio(startDate)
+        endPortfolio = history.getPortfolio(endDate)
+    
         # Print a line for each holding 
         for ticker, endHolding in endPortfolio.holdings.iteritems():
             startHolding = None
@@ -63,20 +65,17 @@ class screenOutput:
                       (endHolding.totalDividends() - startHolding.totalDividends()) / 100,
                       (endHolding.profit() - startProfit) / 100)
         print
+
+        # Print some other stuff
         print u"Total capital:  \N{pound sign}%8.2f"%((endPortfolio.capitalGain() - startPortfolio.capitalGain()) / 100)
         print u"Total earnings: \N{pound sign}%8.2f"%((endPortfolio.totalDividends() - startPortfolio.totalDividends()) / 100)
-        print u"Total profit:   \N{pound sign}%8.2f"%((endPortfolio.totalProfit() - startPortfolio.totalProfit()) / 100)
+        totalProfit = (endPortfolio.totalProfit() - startPortfolio.totalProfit()) / 100
+        print u"Total profit:   \N{pound sign}%8.2f"%(totalProfit)
         print
         print u"Portfolio value at start of period: \N{pound sign}%.2f"%(startPortfolio.value() / 100)
         print u"Portfolio value at end of period: \N{pound sign}%.2f"%(endPortfolio.value() / 100)
         
-        
-        
-        # TODO: write this code    
-        #print "Expenses: %s%.2f"%(pound_sign, (day2.expenses - day1.expenses) / 100)
-        #print
-        #print "Basis for return accounting for purchase / sale: %s%.2f"%(pound_sign,basis_for_return / 100)
-        #print "Percentage return on investment: %.2f%%"%(total_share_profit * 10000 / basis_for_return)
-        #print
-        
+        basisForReturn = history.basisForReturn(startDate, endDate) / 100
+        print u"Basis for return: \N{pound sign}%.2f"%(basisForReturn)
+        print u"Percentage return on investment: %.2f%%"%(100 * totalProfit / basisForReturn)
         
