@@ -45,3 +45,22 @@ class NewPortfolio:
             if holding.number > 0:
                 current.append(ticker)
         return current                
+        
+    def totalDividends(self):
+        dividends = 0
+        for holding in self.holdings.values():
+            dividends += holding.totalDividends()
+        return dividends
+        
+    def totalProfit(self):
+        profit = 0
+        for holding in self.holdings.values():
+            profit += holding.profit()
+        return profit
+    
+    def capitalGain(self):
+        gain = 0
+        for holding in self.holdings.values():
+            gain += holding.capitalGain()
+        return gain
+    

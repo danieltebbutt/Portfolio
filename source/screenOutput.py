@@ -39,3 +39,44 @@ class screenOutput:
         for purchase in reversed(sorted(purchases, key=lambda purchase: purchase.percent_profit())):
             print purchase.toString()
         print
+        
+    @staticmethod
+    def portfolioDiff(startPortfolio, endPortfolio):
+        
+        # Print a line for each holding 
+        for ticker, endHolding in endPortfolio.holdings.iteritems():
+            startHolding = None
+            if ticker in startPortfolio.holdings:
+                startHolding = startPortfolio.holdings[ticker]
+                
+            if not startHolding:
+                startProfit = 0
+            elif startHolding.profit() != endHolding.profit() or startHolding.number != 0 or endHolding.number != 0:
+                startProfit = startHolding.profit()
+            else:
+                startProfit = None
+                
+            if startProfit != None:
+                print u"%6s Capital: \N{pound sign}%8.2f Earnings: \N{pound sign}%8.2f Total: \N{pound sign}%8.2f"%(
+                      ticker,
+                      (endHolding.capitalGain() - startHolding.capitalGain()) / 100,
+                      (endHolding.totalDividends() - startHolding.totalDividends()) / 100,
+                      (endHolding.profit() - startProfit) / 100)
+        print
+        print u"Total capital:  \N{pound sign}%8.2f"%((endPortfolio.capitalGain() - startPortfolio.capitalGain()) / 100)
+        print u"Total earnings: \N{pound sign}%8.2f"%((endPortfolio.totalDividends() - startPortfolio.totalDividends()) / 100)
+        print u"Total profit:   \N{pound sign}%8.2f"%((endPortfolio.totalProfit() - startPortfolio.totalProfit()) / 100)
+        print
+        print u"Portfolio value at start of period: \N{pound sign}%.2f"%(startPortfolio.value() / 100)
+        print u"Portfolio value at end of period: \N{pound sign}%.2f"%(endPortfolio.value() / 100)
+        
+        
+        
+        # TODO: write this code    
+        #print "Expenses: %s%.2f"%(pound_sign, (day2.expenses - day1.expenses) / 100)
+        #print
+        #print "Basis for return accounting for purchase / sale: %s%.2f"%(pound_sign,basis_for_return / 100)
+        #print "Percentage return on investment: %.2f%%"%(total_share_profit * 10000 / basis_for_return)
+        #print
+        
+        

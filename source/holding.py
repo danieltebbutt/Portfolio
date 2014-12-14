@@ -25,8 +25,7 @@ class Holding:
         elif transaction.action == "EXDIV":
             # Again, applied in proportion to purchases
             for item in self.purchases:
-                if item.number > 0:
-                    item.dividend(self.number, transaction.price)
+                item.dividend(self.number, transaction.price)
         elif transaction.action == "SCRIP":
             for item in self.purchases:
                 item.scrip(transaction.number / self.number)
@@ -73,7 +72,10 @@ class Holding:
         for purchase in self.activePurchases():
             profit += purchase.absolute_profit()
         return profit
-        
+    
+    def profit(self):
+        return self.currentValue() + self.cash
+    
     def toStringActive(self):
         return u"%8d %6s, cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
                self.number, 
@@ -81,4 +83,13 @@ class Holding:
                self.activeCost() / 100, 
                self.currentValue() / 100,
                self.activeProfit() / 100)
+        
+    def totalDividends(self):
+        dividends = 0
+        for purchase in self.purchases:
+            dividends += purchase.total_dividends()
+        return dividends
+        
+    def capitalGain(self):
+        return self.profit() - self.totalDividends()
         

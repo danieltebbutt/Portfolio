@@ -10,14 +10,14 @@ from newPortfolio import NewPortfolio
 
 class History:
 
-    def __init__(self, transactions):
+    def __init__(self, transactions, prices = {}):
         self.transactions = transactions
-        self.prices = {}
+        self.prices = prices
 
-    def getPortfolio(self, date):
-        portfolio = NewPortfolio(date)
+    def getPortfolio(self, portfolioDate):
+        portfolio = NewPortfolio(portfolioDate)
         for transaction in self.transactions:
-            if transaction.date < date:
+            if transaction.date < portfolioDate:
                 portfolio.applyTransaction(transaction)
         portfolio.notePrices(self.prices)
         return portfolio
@@ -40,3 +40,4 @@ class History:
         
     def currentTickers(self):
         return self.getPortfolio(datetime.date.today()).currentTickers()
+        

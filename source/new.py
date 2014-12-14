@@ -120,16 +120,33 @@ def help():
         print command
 
 def compare(startDateString, endDateString = ""):
-    startDate = datetime.strptime(startDateString, "%Y-%m-%d")
-    if endDateString:
-        endDate = datetime.strptime(endDateString, "%Y-%m-%d")
-    else:
+    # Parse dates
+    try:
+        startDate = datetime.strptime(startDateString, "%Y-%m-%d").date()
+    except:
+        print "Unable to parse %s as %Y-%m-%d"%startDateString
+        return
+    try:
+        if endDateString:
+            endDate = datetime.strptime(endDateString, "%Y-%m-%d").date()
+        else:
+            endDate = date.today()
+    except:
+        print "Unable to parse %s as %Y-%m-%d"%endDateString
+        return
+
+    # Validate input
+    if endDate <= startDate:
+        print "End date must be later than start date"
+        return
+    elif endDate > date.today():
         endDate = date.today()
-        
+
+    # Get start and end portfolios and diff them    
     startPortfolio = history.getPortfolio(startDate)
     endPortfolio = history.getPortfolio(endDate)
-        
     
+    screenOutput.portfolioDiff(startPortfolio, endPortfolio)
         
 def runCommand(command):    
     substrings = command.split()

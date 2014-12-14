@@ -25,8 +25,9 @@ class purchase:
         return self.number * self.purchase_price
         
     def dividend(self, number, divi):
-        self.dividends_received += divi * (min(number, self.number) / self.number)
-        number -= min(number, self.number)
+        if self.number_left():
+            self.dividends_received += divi * (min(number, self.number_left()) / (self.number_left()))
+        number -= min(number, self.number_left())
         return number
 
     def scrip(self, scrip):
