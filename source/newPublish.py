@@ -60,6 +60,9 @@ def writeSector(outputfile, portfolio):
 def writeClass(outputfile, portfolio):
     outputfile.write("Test 7<BR>\n")
             
+def writeDate(outputfile, portfolio):
+    outputfile.write("%s"%datetime.today().date())            
+            
 def actionTemplate(portfolio, template):
 
     # tag: (function, isScript)
@@ -70,6 +73,7 @@ def actionTemplate(portfolio, template):
             "###NET###"          : (writeNet, True),
             "###SECTOR###"       : (writeSector, True),
             "###CLASS###"        : (writeClass, True),
+            "###DATE###"         : (writeDate, False),
             }
 
     fileStream = open(join(TEMPLATE_DIR,template), 'r')
