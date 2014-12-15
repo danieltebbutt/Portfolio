@@ -65,3 +65,6 @@ class History:
             currentDate += datetime.timedelta(days = 1)
                     
         return numerator / ((endDate - startDate).days)
+
+    def peakValue(self):
+        return 10000000

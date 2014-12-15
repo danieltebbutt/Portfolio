@@ -165,7 +165,7 @@ def capitalGain():
     screenOutput.capitalGain(portfolio)        
         
 def publish():
-    newPublish.mainPage(portfolio)
+    newPublish.mainPage(history, portfolio)
         
 #
 # Main code

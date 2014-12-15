@@ -30,7 +30,7 @@ def writeScriptHeader(outputfile):
     outputfile.write("\
 <script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script>\n\
 <script type=\"text/javascript\">\n\
-  google.load(\"visualization\", \"1\", {packages:[\"corechart\"]});\n\
+google.load(\"visualization\", \"1\", {packages:[\"corechart\"]});\n\
 google.setOnLoadCallback(drawChart);\n\
 function drawChart() {\n")
 
@@ -39,31 +39,84 @@ def writeScriptFooter(outputfile):
 }\n\
 </script>\n")
 
-def writeCurrent(outputfile, portfolio):
-    outputfile.write("Test 1<BR>\n")
+def writeCurrent(outputfile, history, portfolio):
+    outputfile.write("<DIV ALIGN=\"Left\"><B>Current portfolio (%d%% of peak size)</B><BR></DIV>\n"%(portfolio.value() * 100 / history.peakValue()))
+
+    outputfile.write(
+"<TABLE WIDTH=100%% BORDER=1 BORDERCOLOR=\"#888888\" CELLPADDING=2 CELLSPACING=0 CLASS=\"sortable\" style=\"font-size:12px\">\n\
+  <TR VALIGN=TOP>\
+<TH>Share</TH>\
+<TH>Ticker</TH>\
+<TH TITLE=\"Percentage of portfolio value\">Percentage</TH>\
+<TH TITLE=\"Average purchase price\">Bought at (p)</TH>\
+<TH TITLE=\"Current price\">Current (p)</TH>\
+<TH TITLE=\"Average per-share accumulated dividends received\">Dividends (p)</TH>\
+<TH TITLE=\"Average per-share profit, including capital gain and dividends received\">Profit</TH>\
+<TH TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\
+</TR>\n")
+
+    for ticker in portfolio.currentTickers():
+        holding = portfolio.holdings[ticker]
+        outputfile.write("  <TR VALIGN=TOP>")
+        
+        # Full name
+        # TODO change to full name/URL
+        outputfile.write("<TD>%s</TD>"%ticker)
+        
+        # Ticker
+        outputfile.write("<TD>%s</TD>"%ticker)
+        
+        # Percentage of total value
+        outputfile.write("<TD>%.1f%%"%(100 * holding.value() / portfolio.value()))
+        
+        # Average purchase price
+        outputfile.write("<TD>%.1f</TD>"%holding.averagePurchasePrice())
+        
+        # Current price
+        outputfile.write("<TD>%.1f</TD>"%holding.price)
+        
+        # Dividends
+        outputfile.write("<TD>%.1f</TD>"%holding.perShareDividends(active = True))
+        
+        # Profit
+        profit = 100 * holding.activeProfit() / holding.activeCost()
+        outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
+                         ("#008000" if profit >= 0 else "#800000"), 
+                         profit))
+        
+        # Annual profit
+        # TODO: fill in 
+        profit = 0
+        outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
+                         ("#008000" if profit >= 0 else "#800000"), 
+                         profit))
+                         
+        outputfile.write("\n")
+
+    outputfile.write("</TABLE>\n")
     
-def writePrevious(outputfile, portfolio):
-    outputfile.write("Test 2<BR>\n")
+def writePrevious(outputfile, history, portfolio):
+    outputfile.write("")
     
-def writeProfit(outputfile, portfolio):
-    outputfile.write("Test 3<BR>\n")
+def writeProfit(outputfile, history, portfolio):
+    outputfile.write("")
     
-def writeSize(outputfile, portfolio):
-    outputfile.write("Test 4<BR>\n")
+def writeSize(outputfile, history, portfolio):
+    outputfile.write("")
     
-def writeNet(outputfile, portfolio):
-    outputfile.write("Test 5<BR>\n")
+def writeNet(outputfile, history, portfolio):
+    outputfile.write("")
     
-def writeSector(outputfile, portfolio):
-    outputfile.write("Test 6<BR>\n")
+def writeSector(outputfile, history, portfolio):
+    outputfile.write("")
     
-def writeClass(outputfile, portfolio):
+def writeClass(outputfile, history, portfolio):
     outputfile.write("Test 7<BR>\n")
             
-def writeDate(outputfile, portfolio):
+def writeDate(outputfile, history, portfolio):
     outputfile.write("%s"%datetime.today().date())            
             
-def actionTemplate(portfolio, template):
+def actionTemplate(history, portfolio, template):
 
     # tag: (function, isScript)
     tags = {"###CURRENT###"      : (writeCurrent, False),
@@ -94,23 +147,23 @@ def actionTemplate(portfolio, template):
                 writeScriptHeader(outputfile)
                 for tag in writeTags:
                     writeTags[tag] = chartIndex
-                    tags[tag][0](outputfile, portfolio)
+                    tags[tag][0](outputfile, history, portfolio)
                 writeScriptFooter(outputfile)
             outputfile.write(line)
         elif line.strip() in writeTags:
             outputfile.write("<div id=\"chart_div%d\" style=\"width: 900px; height: 500px;\"></div>\n"%writeTags[tag])
         elif line.strip() in tags:
-            tags[line.strip()][0](outputfile, portfolio)
+            tags[line.strip()][0](outputfile, history, portfolio)
         else:
             outputfile.write(line)
     outputfile.close()    
     
-def mainPage(portfolio):
+def mainPage(history, portfolio):
 
     templateFiles = [ f for f in listdir(TEMPLATE_DIR) if isfile(join(TEMPLATE_DIR, f)) ]
 
     for template in templateFiles:
-        actionTemplate(portfolio, template)
+        actionTemplate(history, portfolio, template)
     
     #upload()
     

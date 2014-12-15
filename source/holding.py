@@ -43,6 +43,9 @@ class Holding:
         for purchase in self.purchases:
             purchase.note_price(price)
     
+    def value(self):
+        return self.currentValue()
+    
     def currentValue(self):
         return (self.number * self.price)
     
@@ -90,6 +93,25 @@ class Holding:
             dividends += purchase.total_dividends()
         return dividends
         
+    def perShareDividends(self, active = False):
+        dividends = 0
+        if active:
+            purchaseList = self.activePurchases()
+        else:
+            purchaseList = self.purchases
+        for purchase in purchaseList:        
+            dividends += purchase.dividends_received
+        return dividends
+                
+    def averagePurchasePrice(self):
+        numerator = 0
+        denominator = 0        
+        for purchase in self.activePurchases():        
+            numerator += purchase.number_left() * purchase.purchase_price
+            denominator += purchase.number_left()
+        return numerator / denominator
+        
+                
     def capitalGain(self):
         return self.profit() - self.totalDividends()
         
