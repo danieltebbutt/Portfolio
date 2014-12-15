@@ -10,14 +10,17 @@ import sys
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
-from screenOutput import screenOutput
 
+
+from screenOutput import screenOutput
 from price import Price
 from transaction import transaction
 from history import History
 from investment import investment
 
 from urlcache import urlcache
+
+import newPublish
 
 # Cache all URLs that we are going to load from later
 def cacheUrls(tickerList, currencyList, investments, history, startDate, prices):
@@ -161,6 +164,9 @@ def income():
 def capitalGain():
     screenOutput.capitalGain(portfolio)        
         
+def publish():
+    newPublish.mainPage(portfolio)
+        
 #
 # Main code
 #    
@@ -172,6 +178,7 @@ commands = {
     "income" : income,
     "compare" : compare,
     "capital" : capitalGain,
+    "publish" : publish,
 }
 
 # TODO:
