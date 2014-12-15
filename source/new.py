@@ -176,9 +176,8 @@ commands = {
 
 # TODO:
 # Publish to web
-# Portfolio yield
-# Capital gains
 # Tax
+# Portfolio yield
 
 # Create the complete portfolio history
 print "Building portfolio history..."
