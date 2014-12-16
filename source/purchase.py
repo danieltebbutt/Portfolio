@@ -1,4 +1,5 @@
 import transaction
+from datetime import datetime
 
 class purchase:
 
@@ -95,3 +96,9 @@ class purchase:
         
     def capitalGain(self):
         return (self.closing_price() - self.purchase_price) * self.number_left()
+        
+    def holdingPeriod(self):
+        if self.number_left() > 0:
+            return (datetime.today().date() - self.date_bought).days
+        else:
+            return (max(self.date_sold) - self.date_bought).days

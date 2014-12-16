@@ -39,7 +39,7 @@ def writeScriptFooter(outputfile):
 }\n\
 </script>\n")
 
-def writeCurrent(outputfile, history, portfolio):
+def writeCurrent(outputfile, history, portfolio, investments):
     outputfile.write("<DIV ALIGN=\"Left\"><B>Current portfolio (%d%% of peak size)</B><BR></DIV>\n"%(portfolio.value() * 100 / history.peakValue()))
 
     outputfile.write(
@@ -60,8 +60,7 @@ def writeCurrent(outputfile, history, portfolio):
         outputfile.write("  <TR VALIGN=TOP>")
         
         # Full name
-        # TODO change to full name/URL
-        outputfile.write("<TD>%s</TD>"%ticker)
+        outputfile.write("<TD>%s</TD>"%investments[ticker].fullname)
         
         # Ticker
         outputfile.write("<TD>%s</TD>"%ticker)
@@ -85,8 +84,7 @@ def writeCurrent(outputfile, history, portfolio):
                          profit))
         
         # Annual profit
-        # TODO: fill in 
-        profit = 0
+        profit = 100 * ((1 + (holding.activeProfit() / holding.activeCost())) ** (365.0 / holding.averageHoldingPeriod()) - 1)
         outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
                          ("#008000" if profit >= 0 else "#800000"), 
                          profit))
@@ -95,28 +93,28 @@ def writeCurrent(outputfile, history, portfolio):
 
     outputfile.write("</TABLE>\n")
     
-def writePrevious(outputfile, history, portfolio):
+def writePrevious(outputfile, history, portfolio, investments):
     outputfile.write("")
     
-def writeProfit(outputfile, history, portfolio):
+def writeProfit(outputfile, history, portfolio, investments):
     outputfile.write("")
     
-def writeSize(outputfile, history, portfolio):
+def writeSize(outputfile, history, portfolio, investments):
     outputfile.write("")
     
-def writeNet(outputfile, history, portfolio):
+def writeNet(outputfile, history, portfolio, investments):
     outputfile.write("")
     
-def writeSector(outputfile, history, portfolio):
+def writeSector(outputfile, history, portfolio, investments):
     outputfile.write("")
     
-def writeClass(outputfile, history, portfolio):
+def writeClass(outputfile, history, portfolio, investments):
     outputfile.write("Test 7<BR>\n")
             
-def writeDate(outputfile, history, portfolio):
+def writeDate(outputfile, history, portfolio, investments):
     outputfile.write("%s"%datetime.today().date())            
             
-def actionTemplate(history, portfolio, template):
+def actionTemplate(history, portfolio, investments, template):
 
     # tag: (function, isScript)
     tags = {"###CURRENT###"      : (writeCurrent, False),
@@ -147,23 +145,23 @@ def actionTemplate(history, portfolio, template):
                 writeScriptHeader(outputfile)
                 for tag in writeTags:
                     writeTags[tag] = chartIndex
-                    tags[tag][0](outputfile, history, portfolio)
+                    tags[tag][0](outputfile, history, portfolio, investments)
                 writeScriptFooter(outputfile)
             outputfile.write(line)
         elif line.strip() in writeTags:
-            outputfile.write("<div id=\"chart_div%d\" style=\"width: 900px; height: 500px;\"></div>\n"%writeTags[tag])
+            outputfile.write("<div id=\"chart_div%d\"></div>\n"%writeTags[tag])
         elif line.strip() in tags:
-            tags[line.strip()][0](outputfile, history, portfolio)
+            tags[line.strip()][0](outputfile, history, portfolio, investments)
         else:
             outputfile.write(line)
     outputfile.close()    
     
-def mainPage(history, portfolio):
+def mainPage(history, portfolio, investments):
 
     templateFiles = [ f for f in listdir(TEMPLATE_DIR) if isfile(join(TEMPLATE_DIR, f)) ]
 
     for template in templateFiles:
-        actionTemplate(history, portfolio, template)
+        actionTemplate(history, portfolio, investments, template)
     
     #upload()
     

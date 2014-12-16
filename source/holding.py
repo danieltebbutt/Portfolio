@@ -109,9 +109,16 @@ class Holding:
         for purchase in self.activePurchases():        
             numerator += purchase.number_left() * purchase.purchase_price
             denominator += purchase.number_left()
-        return numerator / denominator
-        
+        return numerator / denominator        
                 
     def capitalGain(self):
         return self.profit() - self.totalDividends()
+        
+    def averageHoldingPeriod(self):
+        numerator = 0
+        denominator = 0        
+        for purchase in self.activePurchases():        
+            numerator += purchase.number_left() * purchase.holdingPeriod()
+            denominator += purchase.number_left()
+        return numerator / denominator
         

@@ -111,7 +111,7 @@ def createHistory():
     # Now save any new data to disk
     Price.savePricesToDisk(prices)
     
-    return history
+    return (history, investments)
     
 def interactive():
     while True:
@@ -165,7 +165,7 @@ def capitalGain():
     screenOutput.capitalGain(portfolio)        
         
 def publish():
-    newPublish.mainPage(history, portfolio)
+    newPublish.mainPage(history, portfolio, investments)
         
 #
 # Main code
@@ -188,7 +188,7 @@ commands = {
 
 # Create the complete portfolio history
 print "Building portfolio history..."
-history = createHistory()
+history, investments = createHistory()
 print "Done"
 print ""
 
