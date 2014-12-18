@@ -4,6 +4,7 @@
 
 import re
 import datetime
+from datetime import timedelta
 
 from transaction import transaction
 from newPortfolio import NewPortfolio
@@ -41,30 +42,70 @@ class History:
     def currentTickers(self):
         return self.getPortfolio(datetime.date.today()).currentTickers()
         
-    def basisForReturn(self, startDate, endDate):
-        # Get a portfolio for the start of the period
-        portfolio = self.getPortfolio(startDate) 
+    def getPortfolios(self, startDate, endDate):
         currentDate = startDate
-        numerator = 0
         
-        # We want the average net invested over the period, but must include
-        # any accumulated profit at the start date
-        modifier = portfolio.value() - portfolio.netInvested()
+        portfolio = self.getPortfolio(startDate)
+        
         for transaction in self.transactions:
             while currentDate < transaction.date and currentDate < endDate:
-                numerator += portfolio.netInvested() + modifier
+                portfolio.date = currentDate
+                portfolio.notePrices(self.prices)
+                yield portfolio
                 currentDate += datetime.timedelta(days = 1)
             if transaction.date > endDate:
                 break
             if transaction.date >= startDate:
                 portfolio.applyTransaction(transaction)
+        while currentDate <= endDate:
+            portfolio.date = currentDate
+            portfolio.notePrices(self.prices)
+            yield portfolio
+            currentDate += timedelta(days = 1)
+                        
+    def basisForReturn(self, startDate, endDate):        
         
-        # If we've run out of transactions then spin forwards to the end of the period.
-        while currentDate < endDate:
+        while currentDate <= endDate:            
+            portfolio = self.getPortfolio(currentDate)
+            yield portfolio
+            currentDate += timedelta(days = 1)
+        
+    def basisForReturn(self, startDate, endDate):
+        numerator = 0
+        portfolio = self.getPortfolio(startDate)
+        modifier = portfolio.value() - portfolio.netInvested()
+        for portfolio in self.getPortfolios(startDate, endDate):
             numerator += portfolio.netInvested() + modifier
-            currentDate += datetime.timedelta(days = 1)
-                    
+        
         return numerator / ((endDate - startDate).days)
 
-    def peakValue(self):
-        return 10000000
+    def peakValue(self, startDate = None, endDate = None):
+        if not startDate:
+            startDate = self.startDate()
+        if not endDate:
+            endDate = self.endDate()
+            
+        peak = 0
+        for portfolio in self.getPortfolios(startDate, endDate):
+            peak = max(peak, portfolio.totalValue())
+    
+        return peak
+        
+    def startDate(self):
+        return self.transactions[0].date
+        
+    def endDate(self):
+        return self.transactions[-1].date
+        
+    def peakInvested(self, startDate = None, endDate = None):
+        if not startDate:
+            startDate = self.startDate()
+        if not endDate:
+            endDate = self.endDate()
+    
+        peak = 0
+        for portfolio in self.getPortfolios(startDate, endDate):
+            peak = max(peak, portfolio.netInvested())
+    
+        return peak
+        

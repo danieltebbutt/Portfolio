@@ -56,6 +56,9 @@ class Holding:
                 active.append(purchase)
         return active
     
+    def inactivePurchases(self):
+        return list(set(self.purchases) - set(self.activePurchases()))
+    
     def toString(self):        
         return u"%8d %6s, net cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
                self.number, 

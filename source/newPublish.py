@@ -55,7 +55,9 @@ def writeCurrent(outputfile, history, portfolio, investments):
 <TH TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\
 </TR>\n")
 
-    for ticker in portfolio.currentTickers():
+    
+
+    for ticker in sorted(portfolio.currentTickers(), key=lambda x: portfolio.holdings[x].value(), reverse = True):
         holding = portfolio.holdings[ticker]
         outputfile.write("  <TR VALIGN=TOP>")
         
@@ -94,28 +96,180 @@ def writeCurrent(outputfile, history, portfolio, investments):
     outputfile.write("</TABLE>\n")
     
 def writePrevious(outputfile, history, portfolio, investments):
-    outputfile.write("")
+    outputfile.write("<B>Former holdings</B><BR>\n")
+    outputfile.write(
+"<TABLE WIDTH=100%% BORDER=1 BORDERCOLOR=\"#888888\" CELLPADDING=2 CELLSPACING=0 CLASS=\"sortable\" style=\"font-size:12px\">\n\
+<TR VALIGN=TOP>\n\
+<TH>Share</TH>\n\
+<TH>Ticker</TH>\n\
+<TH TITLE=\"Average purchase price\">Bought at (p)</TH>\n\
+<TH TITLE=\"Average sale price\">Sold at (p)</TH>\n\
+<TH TITLE=\"Average per-share accumulated dividends received\">Dividends (p)</TH>\n\
+<TH TITLE=\"Average per-share profit, including capital gain and dividends received\">Profit</TH>\n\
+<TH TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\n\
+</TR>\n")
+
+    purchases = []
+    for ticker, holding in portfolio.holdings.iteritems():
+        purchases.extend(holding.inactivePurchases())
+        
+    purchases.sort(key=lambda x: x.percent_profit(), reverse = True)
+
+    for purchase in purchases:
+        outputfile.write("  <TR VALIGN=TOP>")
+        
+        # Full name
+        outputfile.write("<TD>%s</TD>"%investments[purchase.ticker].fullname)
+        
+        # Ticker
+        outputfile.write("<TD>%s</TD>"%purchase.ticker)
+        
+        # Average purchase price
+        outputfile.write("<TD>%.1f</TD>"%purchase.purchase_price)
+        
+        # Sale price
+        outputfile.write("<TD>%.1f</TD>"%purchase.sale_price)
+        
+        # Dividends
+        outputfile.write("<TD>%.1f</TD>"%purchase.dividends_received)
+        
+        # Profit
+        profit = purchase.percent_profit()
+        outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
+                         ("#008000" if profit >= 0 else "#800000"), 
+                         profit))
+        
+        # Annual profit
+        profit = 100 * ((1 + (purchase.percent_profit() / 100)) ** (365.0 / purchase.holdingPeriod()) - 1)
+        outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
+                         ("#008000" if profit >= 0 else "#800000"), 
+                         profit))
+                         
+        outputfile.write("\n")
+
+    outputfile.write("</TABLE>\n")
     
 def writeProfit(outputfile, history, portfolio, investments):
-    outputfile.write("")
+    global chartIndex
+
+    outputfile.write("\
+var data%d = google.visualization.arrayToDataTable([\n\
+['Month', 'Profit'],\n"%chartIndex)
+    
+    totalDays = history.endDate() - history.startDate()
+    
+    peakInvested = history.peakInvested()
+    for days in range(0, totalDays.days, 28):
+        date = history.startDate() + timedelta(days = days)
+        outputfile.write("[new Date(%d,%d,%d),%.1f],\n"%(
+                         date.year,
+                         date.month - 1,
+                         date.day,
+                         100 * history.getPortfolio(date).totalProfit() / peakInvested
+                         ))
+    
+    outputfile.write("]);\n\
+\n\
+  var options%d = {\n\
+    title: 'Profit',\n\
+    legend: {position: 'none'},\n\
+  };\n\
+\n\
+  var chart%d = new google.visualization.LineChart(document.getElementById('chart_div%d'));\n\
+\n\
+  chart%d.draw(data%d, options%d);\n"%(chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex))
+    chartIndex += 1
     
 def writeSize(outputfile, history, portfolio, investments):
-    outputfile.write("")
+    global chartIndex
+
+    outputfile.write("\
+var data%d = google.visualization.arrayToDataTable([\n\
+['Month', 'Size'],\n"%chartIndex)
+    
+    totalDays = history.endDate() - history.startDate()
+    
+    peakValue = history.peakValue()
+    for days in range(0, totalDays.days, 28):
+        date = history.startDate() + timedelta(days = days)
+        outputfile.write("[new Date(%d,%d,%d),%.1f],\n"%(
+                         date.year,
+                         date.month - 1,
+                         date.day,
+                         100 * history.getPortfolio(date).totalValue() / peakValue
+                         ))
+    
+    outputfile.write("]);\n\
+\n\
+  var options%d = {\n\
+    title: 'Size',\n\
+    legend: {position: 'none'},\n\
+  };\n\
+\n\
+  var chart%d = new google.visualization.LineChart(document.getElementById('chart_div%d'));\n\
+\n\
+  chart%d.draw(data%d, options%d);\n"%(chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex))
+    chartIndex += 1
     
 def writeNet(outputfile, history, portfolio, investments):
-    outputfile.write("")
+    global chartIndex
+
+    outputfile.write("\
+var data%d = google.visualization.arrayToDataTable([\n\
+['Month', 'Size', 'Net invested'],\n"%chartIndex)
+    
+    totalDays = history.endDate() - history.startDate()
+    
+    peakValue = history.peakValue()
+    for days in range(0, totalDays.days, 28):
+        date = history.startDate() + timedelta(days = days)
+        outputfile.write("[new Date(%d,%d,%d),%.1f,%.1f],\n"%(
+                         date.year,
+                         date.month - 1,
+                         date.day,
+                         100 * history.getPortfolio(date).totalValue() / peakValue,
+                         100 * history.getPortfolio(date).netInvested() / peakValue
+                         ))
+    
+    outputfile.write("]);\n\
+\n\
+  var options%d = {\n\
+    title: 'Size vs Net Invested',\n\
+    legend: {position: 'none'},\n\
+  };\n\
+\n\
+  var chart%d = new google.visualization.LineChart(document.getElementById('chart_div%d'));\n\
+\n\
+  chart%d.draw(data%d, options%d);\n"%(chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex))
+    chartIndex += 1
     
 def writeSector(outputfile, history, portfolio, investments):
-    outputfile.write("")
+    pass
     
 def writeClass(outputfile, history, portfolio, investments):
-    outputfile.write("Test 7<BR>\n")
-            
+    pass
+    
 def writeDate(outputfile, history, portfolio, investments):
     outputfile.write("%s"%datetime.today().date())            
             
 def actionTemplate(history, portfolio, investments, template):
-
+    global chartIndex
+    
     # tag: (function, isScript)
     tags = {"###CURRENT###"      : (writeCurrent, False),
             "###PREVIOUS###"     : (writePrevious, False),
@@ -149,7 +303,7 @@ def actionTemplate(history, portfolio, investments, template):
                 writeScriptFooter(outputfile)
             outputfile.write(line)
         elif line.strip() in writeTags:
-            outputfile.write("<div id=\"chart_div%d\"></div>\n"%writeTags[tag])
+            outputfile.write("<div id=\"chart_div%d\" style=\"width: 600px; height: 400px;\"></div>\n"%writeTags[line.strip()])
         elif line.strip() in tags:
             tags[line.strip()][0](outputfile, history, portfolio, investments)
         else:

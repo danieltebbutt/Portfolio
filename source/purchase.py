@@ -8,7 +8,7 @@ class purchase:
                  number,
                  date_bought,
                  purchase_price = 0.0,
-                 date_sold = [],
+                 date_sold = None,
                  sale_price = 0.0,
                  value_now = 0.0,
                  dividends_received = 0.0):
@@ -16,7 +16,10 @@ class purchase:
         self.number = number
         self.number_sold = 0
         self.date_bought = date_bought
-        self.date_sold = date_sold
+        if date_sold:
+            self.date_sold = date_sold
+        else:
+            self.date_sold = []
         self.purchase_price = purchase_price
         self.sale_price = sale_price
         self.value_now = value_now
@@ -40,6 +43,7 @@ class purchase:
 
     def sell(self, number, price, date):
         if number > 0.1 and self.number_left() > 0.1:
+            #print "Sell:", self.ticker, self.date_sold, date
             self.date_sold.append(date)
             self.sale_price = (self.sale_price * self.number_sold + min(number, self.number_left()) * price) / (self.number_sold + min(number, self.number_left()))
             self.number_sold += min(number, (self.number_left()))
@@ -99,6 +103,7 @@ class purchase:
         
     def holdingPeriod(self):
         if self.number_left() > 0:
-            return (datetime.today().date() - self.date_bought).days
+            holdingPeriod = (datetime.today().date() - self.date_bought).days
         else:
-            return (max(self.date_sold) - self.date_bought).days
+            holdingPeriod = (max(self.date_sold) - self.date_bought).days
+        return holdingPeriod
