@@ -2,6 +2,8 @@
 
 import os
 import webbrowser
+import ftplib
+import getpass
 from os import listdir
 from os.path import isfile, join
 from datetime import timedelta
@@ -23,8 +25,8 @@ def upload(filename):
     outputfile.close()
     session.quit()
     
-def display():
-    webbrowser.open("http://www.%s/%s"%(DESTINATION, FILENAME))
+def display(filename):
+    webbrowser.open("http://www.%s/%s"%(DESTINATION, filename))
 
 def writeScriptHeader(outputfile):
     outputfile.write("\
@@ -316,8 +318,7 @@ def mainPage(history, portfolio, investments):
 
     for template in templateFiles:
         actionTemplate(history, portfolio, investments, template)
+        upload(template)    
+        display(template)
     
-    #upload()
-    
-    #display()
     

@@ -182,7 +182,6 @@ commands = {
 }
 
 # TODO:
-# Publish to web
 # Tax
 # Portfolio yield
 
