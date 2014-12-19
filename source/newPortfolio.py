@@ -31,7 +31,10 @@ class NewPortfolio:
         return self.value()
     
     def contains(self, ticker):
-        return self.holdings[ticker].number > 0
+        if ticker not in self.holdings:
+           return False
+        else:
+            return self.holdings[ticker].number > 0
     
     def cash(self):
         cash = 0        

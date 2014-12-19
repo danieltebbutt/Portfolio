@@ -154,7 +154,7 @@ def runCommand(command):
     else:
         print "Command unrecognized"
 
-def printSummary():
+def summary():
     screenOutput.portfolioSummary(portfolio)
     screenOutput.portfolioPurchases(portfolio)
 
@@ -166,23 +166,27 @@ def capitalGain():
         
 def publish():
     newPublish.mainPage(history, portfolio, investments)
-        
+     
+def tax(year):
+    screenOutput.tax(history, investments, int(year))
+     
 #
 # Main code
 #    
 commands = {
     "interactive" : interactive,
-    "exit" : sys.exit,        
-    "help" : help,
-    "print" : printSummary,
-    "income" : income,
-    "compare" : compare,
-    "capital" : capitalGain,
-    "publish" : publish,
+    "exit"        : sys.exit,        
+    "help"        : help,
+    "summary"     : summary,
+    "income"      : income,
+    "compare"     : compare,
+    "capital"     : capitalGain,
+    "publish"     : publish,
+    "tax"         : tax,
+    "print"       : summary,
 }
 
 # TODO:
-# Tax
 # Portfolio yield
 
 # Create the complete portfolio history

@@ -8,6 +8,7 @@ from datetime import timedelta
 
 from transaction import transaction
 from newPortfolio import NewPortfolio
+import transaction
 
 class History:
 
@@ -40,7 +41,20 @@ class History:
         self.prices = prices
         
     def currentTickers(self):
-        return self.getPortfolio(datetime.date.today()).currentTickers()
+        return self.activeTickers()
+        
+    def activeTickers(self, startDate = None, endDate = None):
+        if not startDate:
+            startDate = datetime.date.today()
+            
+        tickers = self.getPortfolio(startDate).currentTickers()
+            
+        if endDate:
+            transactions = self.getTransactions(startDate, endDate, actions = ["BUY"])
+            for transaction in transactions:
+                if transaction.ticker not in tickers:
+                    tickers.append(transaction.ticker)
+        return tickers
         
     def getPortfolios(self, startDate, endDate):
         currentDate = startDate
@@ -63,8 +77,7 @@ class History:
             yield portfolio
             currentDate += timedelta(days = 1)
                         
-    def basisForReturn(self, startDate, endDate):        
-        
+    def basisForReturn(self, startDate, endDate):                
         while currentDate <= endDate:            
             portfolio = self.getPortfolio(currentDate)
             yield portfolio
@@ -108,4 +121,29 @@ class History:
             peak = max(peak, portfolio.netInvested())
     
         return peak
+        
+    def price(self, ticker, date):
+        return self.prices[(ticker, date)]
+        
+    def getTransactions(self, startDate, endDate = None, ticker = None, actions = transaction.ACTIONS):
+        if not startDate:
+            startDate = self.startDate()
+        if not endDate:
+            endDate = datetime.date.today()
+        for transaction in self.transactions:
+            if transaction.date > endDate:
+                break
+            elif transaction.date >= startDate and \
+                 (not ticker or ticker == transaction.ticker) and \
+                 transaction.action in actions:
+                yield transaction
+            
+    def dividendsReceived(self, startDate, endDate, exchangeTicker = None):
+        total = 0
+        for transaction in self.getTransactions(startDate, endDate, None, "DIV"):
+            dividend = transaction.number * transaction.price
+            if exchangeTicker:
+                dividend /= self.price(exchangeTicker, transaction.date)
+            total += dividend
+        return total
         

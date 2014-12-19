@@ -9,6 +9,8 @@ import datetime
 TRANSACTION = re.compile('(?P<stock>[\w.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
                          '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
 
+ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
+                                                  
 portfolio = ".\\data\\portfolio.txt"                       
                        
 dollar_sign=u'\N{dollar sign}'
@@ -51,13 +53,7 @@ class transaction:
         self.price=float(parsedline.group('price'))
         self.comm=float(parsedline.group('comm'))
 
-        assert((self.action == "BUY") or
-               (self.action == "SELL") or
-               (self.action == "RIGHTS") or
-               (self.action == "DIV") or
-               (self.action == "EXDIV") or
-               (self.action == "SCRIP") or
-               (self.action == "INT"))
+        assert(self.action in ACTIONS)
 
     @staticmethod
     def valid(line):

@@ -5,6 +5,7 @@ import transaction
 import holding
 import portfolio
 import purchase
+import datetime
 
 class screenOutput:
     #
@@ -95,3 +96,49 @@ class screenOutput:
         print
         print u"Gain   \N{pound sign}%9.2f"%(gain)
         print u"Loss   \N{pound sign}%9.2f"%(loss)
+        
+    @staticmethod
+    def tax(history, investments, year):
+        # For all shares held on 1st January after year end, print purchase info and dividends received        
+        endDate = datetime.date(year = year + 1, month = 1, day = 1)
+        endPortfolio = history.getPortfolio(endDate)
+        endExchangeRate = history.price("NOK", endDate)
+                
+        startDate = datetime.date(year = year, month = 1, day = 1)
+        startPortfolio = history.getPortfolio(startDate)
+        startExchangeRate = history.price("NOK", startDate)
+        
+        for ticker in history.activeTickers(startDate, endDate):
+            holding = endPortfolio.holdings[ticker]
+            print
+            print "%s - %s"%(ticker, investments[ticker].isin)
+            if startPortfolio.contains(ticker):
+                startHolding = startPortfolio.holdings[ticker]
+                print "At year start: %d @ %.6f = %.6f NOK"%(startHolding.number, startHolding.price / startExchangeRate, (startHolding.number * startHolding.price / startExchangeRate))
+            if endPortfolio.contains(ticker):
+                print "At year end:   %d @ %.6f = %.6f NOK"%(holding.number, holding.price / endExchangeRate, (holding.number * holding.price / endExchangeRate))
+            print "Transactions:"
+            for transaction in history.getTransactions(None, endDate, ticker, ["BUY","SELL","RIGHTS","SCRIP"]):
+                print "%s %s %d @ %.6f = %.6f NOK"%(transaction.date, 
+                                                    transaction.action, 
+                                                    transaction.number, 
+                                                    ((transaction.price + (transaction.comm / transaction.number)) / history.price("NOK", transaction.date)),
+                                                    (transaction.number * transaction.price + transaction.comm) / history.price("NOK", transaction.date))
+                
+            print "Dividends:"
+            dividends = history.getTransactions(startDate, endDate, ticker, "DIV")            
+            if dividends:
+                totalPerShare = 0
+                total = 0
+                for transaction in dividends:
+                    perShare = transaction.price / (history.price("NOK", transaction.date))
+                    dividend = (transaction.number * transaction.price) / (history.price("NOK", transaction.date))
+                    print "%s %d @ %.6f = %.6f NOK"%(transaction.date, transaction.number, perShare, dividend)
+                    totalPerShare += perShare
+                    total += dividend
+                print " @ %.6f = %.6f NOK"%(totalPerShare, total)
+            else:
+                print "(None)"
+        print
+        print "Total dividends for the year = %.6f NOK"%history.dividendsReceived(startDate, endDate, "NOK")
+    

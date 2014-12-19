@@ -28,7 +28,7 @@ TEXTSAVE=re.compile('(?P<ticker>[\w.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<da
 # PRICE SOURCES
 LATEST_PRICES_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"
 HISTORICAL_SHARE_PRICE_URL = "http://ichart.finance.yahoo.com/table.csv?s=%s&a=%d&b=%d&c=%d&d=%d&e=%d&f=%d&g=d&ignore=.csv"
-HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/convert/fxhistory?date_fmt=us&date=%d/%d/%d&date1=%d/%d/%d&exch=GBP&expr=%s&lang=en&margin_fixed=0&format=CSV&redirected=1"
+HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/convert/fxhistory?date_fmt=us&date=%d/%d/%d&date1=%d/%d/%d&exch=%s&expr=GBP&lang=en&margin_fixed=0&format=CSV&redirected=1"
 
 # MODIFICATIONS
 ROK_BANKRUPT=datetime.date(year=2010,month=11,day=8)
@@ -132,7 +132,8 @@ class Price:
             html = urlCache.read_url(url)
             for rate in EXCHANGE.findall(html):
                 currencyDate = datetime.date(int(rate[2]), int(rate[0]), int(rate[1]))
-                prices[(currency, currencyDate)] = float(rate[3])
+                price = float(rate[3]) * 100
+                prices[(currency, currencyDate)] = price
 
     @staticmethod                
     def loadHistoricalPricesFromWeb(ticker, startDate, endDate, prices, urlCache):          
@@ -166,7 +167,7 @@ class Price:
         
         with open(LOCAL_PRICES, 'a') as file:
             for item in set(prices) - set(alreadyOnDisk):
-                file.write("%s,%s,%s\n"%(item[0],item[1].strftime("%Y-%m-%d"),prices[item]))                   
+                file.write("%s,%s,%s\n"%(item[0],item[1].strftime("%Y-%m-%d"),prices[item]))
             
     @staticmethod
     def lastDates(prices, tickerList):
