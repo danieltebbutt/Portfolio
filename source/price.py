@@ -45,7 +45,7 @@ class Price:
         if ticker.find("IS15") != -1 and price < 1000:
             price *= 100
         if ticker.find("BRK-B") != -1:
-            price *= 100.0 / prices[("USD", priceDate)]
+            price *= prices[("USD", priceDate)]
         return price
 
     @staticmethod
