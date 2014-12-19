@@ -53,16 +53,20 @@ class screenOutput:
                 
             if not startHolding:
                 startProfit = 0
+                startCapitalGain = 0
+                startTotalDividends = 0
             elif startHolding.profit() != endHolding.profit() or startHolding.number != 0 or endHolding.number != 0:
                 startProfit = startHolding.profit()
+                startCapitalGain = startHolding.capitalGain()
+                startTotalDividends = startHolding.totalDividends()
             else:
                 startProfit = None
                 
             if startProfit != None:
                 print u"%6s Capital: \N{pound sign}%8.2f Earnings: \N{pound sign}%8.2f Total: \N{pound sign}%8.2f"%(
                       ticker,
-                      (endHolding.capitalGain() - startHolding.capitalGain()) / 100,
-                      (endHolding.totalDividends() - startHolding.totalDividends()) / 100,
+                      (endHolding.capitalGain() - startCapitalGain) / 100,
+                      (endHolding.totalDividends() - startTotalDividends) / 100,
                       (endHolding.profit() - startProfit) / 100)
         print
 
