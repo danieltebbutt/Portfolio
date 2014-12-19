@@ -3,7 +3,6 @@
 #
 import transaction
 import holding
-import portfolio
 import purchase
 import datetime
 
