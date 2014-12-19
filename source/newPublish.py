@@ -261,10 +261,80 @@ var data%d = google.visualization.arrayToDataTable([\n\
     chartIndex += 1
     
 def writeSector(outputfile, history, portfolio, investments):
-    pass
+    global chartIndex
+
+    outputfile.write("\
+var data%d = google.visualization.arrayToDataTable([\n\
+['Sector', 'Percentage'],\n"%chartIndex)
+    
+    sectors = {}    
+    for ticker in portfolio.currentTickers():
+        sector = investments[ticker].sector
+        if not sector in sectors:
+            sectors[sector] = 0
+        sectors[sector] += 100 * portfolio.holdings[ticker].value() / portfolio.totalValue()
+        
+    for sector in sectors:
+        outputfile.write("['%s',%.1f],\n"%(
+                         sector,
+                         sectors[sector],
+                         ))
+    
+    outputfile.write("]);\n\
+\n\
+  var options%d = {\n\
+    title: 'Sectors',\n\
+    legend: {position: 'none'},\n\
+    pieSliceText: 'label',\n\
+  };\n\
+\n\
+  var chart%d = new google.visualization.PieChart(document.getElementById('chart_div%d'));\n\
+\n\
+  chart%d.draw(data%d, options%d);\n"%(chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex))
+    chartIndex += 1
     
 def writeClass(outputfile, history, portfolio, investments):
-    pass
+    global chartIndex
+
+    outputfile.write("\
+var data%d = google.visualization.arrayToDataTable([\n\
+['Asset Class', 'Percentage'],\n"%chartIndex)
+    
+    classes = {}    
+    for ticker in portfolio.currentTickers():
+        assetClass = "%s %s"%(investments[ticker].region, investments[ticker].assetclass)
+        if not assetClass in classes:
+            classes[assetClass] = 0
+        classes[assetClass] += 100 * portfolio.holdings[ticker].value() / portfolio.totalValue()
+        
+    for assetClass in classes:
+        outputfile.write("['%s',%.1f],\n"%(
+                         assetClass,
+                         classes[assetClass],
+                         ))
+    
+    outputfile.write("]);\n\
+\n\
+  var options%d = {\n\
+    title: 'Asset classes',\n\
+    legend: {position: 'none'},\n\
+    pieSliceText: 'label',\n\
+  };\n\
+\n\
+  var chart%d = new google.visualization.PieChart(document.getElementById('chart_div%d'));\n\
+\n\
+  chart%d.draw(data%d, options%d);\n"%(chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex,
+                                       chartIndex))
+    chartIndex += 1
     
 def writeDate(outputfile, history, portfolio, investments):
     outputfile.write("%s"%datetime.today().date())            
@@ -272,15 +342,15 @@ def writeDate(outputfile, history, portfolio, investments):
 def actionTemplate(history, portfolio, investments, template):
     global chartIndex
     
-    # tag: (function, isScript)
-    tags = {"###CURRENT###"      : (writeCurrent, False),
-            "###PREVIOUS###"     : (writePrevious, False),
-            "###PROFIT###"       : (writeProfit, True),
-            "###SIZE###"         : (writeSize, True),
-            "###NET###"          : (writeNet, True),
-            "###SECTOR###"       : (writeSector, True),
-            "###CLASS###"        : (writeClass, True),
-            "###DATE###"         : (writeDate, False),
+    # tag: (function, isScript, width)
+    tags = {"###CURRENT###"      : (writeCurrent, False, 0),
+            "###PREVIOUS###"     : (writePrevious, False, 0),
+            "###PROFIT###"       : (writeProfit, True, 600),
+            "###SIZE###"         : (writeSize, True, 600),
+            "###NET###"          : (writeNet, True, 600),
+            "###SECTOR###"       : (writeSector, True, 300),
+            "###CLASS###"        : (writeClass, True, 300),
+            "###DATE###"         : (writeDate, False ,0),
             }
 
     fileStream = open(join(TEMPLATE_DIR,template), 'r')
@@ -305,7 +375,11 @@ def actionTemplate(history, portfolio, investments, template):
                 writeScriptFooter(outputfile)
             outputfile.write(line)
         elif line.strip() in writeTags:
-            outputfile.write("<div id=\"chart_div%d\" style=\"width: 600px; height: 400px;\"></div>\n"%writeTags[line.strip()])
+            width = tags[line.strip()][2]
+            style = ""
+            if width < 600:
+                style = " display: table-cell"
+            outputfile.write("<div id=\"chart_div%d\" style=\"width: %dpx; height: 300px;%s\"></div>\n"%(writeTags[line.strip()], width, style))
         elif line.strip() in tags:
             tags[line.strip()][0](outputfile, history, portfolio, investments)
         else:

@@ -16,6 +16,23 @@ google.load("visualization", "1", {packages:["corechart"]});
 google.setOnLoadCallback(drawChart);
 function drawChart() {
 var data1 = google.visualization.arrayToDataTable([
+['Sector', 'Percentage'],
+['Fund',24.0],
+['Energy',6.0],
+['Retail',9.4],
+['Finance',60.6],
+]);
+
+  var options1 = {
+    title: 'Sectors',
+    legend: {position: 'none'},
+    pieSliceText: 'label',
+  };
+
+  var chart1 = new google.visualization.PieChart(document.getElementById('chart_div1'));
+
+  chart1.draw(data1, options1);
+var data2 = google.visualization.arrayToDataTable([
 ['Month', 'Size', 'Net invested'],
 [new Date(2008,0,15),0.0,0.0],
 [new Date(2008,1,12),6.1,6.2],
@@ -108,15 +125,15 @@ var data1 = google.visualization.arrayToDataTable([
 [new Date(2014,9,14),52.2,16.2],
 ]);
 
-  var options1 = {
+  var options2 = {
     title: 'Size vs Net Invested',
     legend: {position: 'none'},
   };
 
-  var chart1 = new google.visualization.LineChart(document.getElementById('chart_div1'));
+  var chart2 = new google.visualization.LineChart(document.getElementById('chart_div2'));
 
-  chart1.draw(data1, options1);
-var data2 = google.visualization.arrayToDataTable([
+  chart2.draw(data2, options2);
+var data3 = google.visualization.arrayToDataTable([
 ['Month', 'Profit'],
 [new Date(2008,0,15),0.0],
 [new Date(2008,1,12),-0.2],
@@ -209,15 +226,15 @@ var data2 = google.visualization.arrayToDataTable([
 [new Date(2014,9,14),51.5],
 ]);
 
-  var options2 = {
+  var options3 = {
     title: 'Profit',
     legend: {position: 'none'},
   };
 
-  var chart2 = new google.visualization.LineChart(document.getElementById('chart_div2'));
+  var chart3 = new google.visualization.LineChart(document.getElementById('chart_div3'));
 
-  chart2.draw(data2, options2);
-var data3 = google.visualization.arrayToDataTable([
+  chart3.draw(data3, options3);
+var data4 = google.visualization.arrayToDataTable([
 ['Month', 'Size'],
 [new Date(2008,0,15),0.0],
 [new Date(2008,1,12),6.1],
@@ -310,14 +327,31 @@ var data3 = google.visualization.arrayToDataTable([
 [new Date(2014,9,14),52.2],
 ]);
 
-  var options3 = {
+  var options4 = {
     title: 'Size',
     legend: {position: 'none'},
   };
 
-  var chart3 = new google.visualization.LineChart(document.getElementById('chart_div3'));
+  var chart4 = new google.visualization.LineChart(document.getElementById('chart_div4'));
 
-  chart3.draw(data3, options3);
+  chart4.draw(data4, options4);
+var data5 = google.visualization.arrayToDataTable([
+['Asset Class', 'Percentage'],
+['USA Shares',44.2],
+['Global Shares',6.0],
+['UK Bonds',40.4],
+['UK Shares',9.4],
+]);
+
+  var options5 = {
+    title: 'Asset classes',
+    legend: {position: 'none'},
+    pieSliceText: 'label',
+  };
+
+  var chart5 = new google.visualization.PieChart(document.getElementById('chart_div5'));
+
+  chart5.draw(data5, options5);
 }
 </script>
 </HEAD>
@@ -325,19 +359,19 @@ var data3 = google.visualization.arrayToDataTable([
 <STYLE>.dantable, .dantable TD, .dantable TH{font-size:10pt;}</STYLE>
 <TABLE WIDTH=100% BORDER=0><TR>
 <TD valign="top" width=25%><DIV ALIGN="Left">Last updated: 
-2014-12-18</DIV></TD>
+2014-12-19</DIV></TD>
 <TD width=50%><DIV ALIGN="Center"><CENTER><H1>Dan's share portfolio</H1></CENTER></DIV></TD>
 <TD VALIGN="top" WIDTH=25%><DIV ALIGN="Right"><A HREF="index.html">Back to main menu</A></DIV></TD>
 </TR></TABLE>
 <TABLE WIDTH=100% CELLSPACING=2><TD VALIGN="top">
-<DIV ALIGN="Left"><B>Current portfolio (54% of peak size)</B><BR></DIV>
+<DIV ALIGN="Left"><B>Current portfolio (55% of peak size)</B><BR></DIV>
 <TABLE WIDTH=100%% BORDER=1 BORDERCOLOR="#888888" CELLPADDING=2 CELLSPACING=0 CLASS="sortable" style="font-size:12px">
   <TR VALIGN=TOP><TH>Share</TH><TH>Ticker</TH><TH TITLE="Percentage of portfolio value">Percentage</TH><TH TITLE="Average purchase price">Bought at (p)</TH><TH TITLE="Current price">Current (p)</TH><TH TITLE="Average per-share accumulated dividends received">Dividends (p)</TH><TH TITLE="Average per-share profit, including capital gain and dividends received">Profit</TH><TH TITLE="Average annual per-share profit, including capital gain and dividends received">Annual profit</TH></TR>
-  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=BRK+OR+Berkshire&as_sitesearch=dansinvestments.blogspot.com">Berkshire Hathaway</A></TD><TD>BRK-B</TD><TD>44.1%<TD>4838.9</TD><TD>9721.1</TD><TD>0.0</TD><TD><FONT COLOR="#008000">100.9%</FONT></TD><TD><FONT COLOR="#008000">24.7%</FONT></TD>
-  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=IS15&as_sitesearch=dansinvestments.blogspot.com">iShares Corporate Bonds</A></TD><TD>IS15.L</TD><TD>24.2%<TD>10401.9</TD><TD>10596.5</TD><TD>1681.5</TD><TD><FONT COLOR="#008000">8.5%</FONT></TD><TD><FONT COLOR="#008000">4.0%</FONT></TD>
-  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=NWBD&as_sitesearch=dansinvestments.blogspot.com">NatWest 9% Preference Share</A></TD><TD>NWBD.L</TD><TD>16.5%<TD>93.5</TD><TD>136.8</TD><TD>27.0</TD><TD><FONT COLOR="#008000">75.1%</FONT></TD><TD><FONT COLOR="#008000">19.0%</FONT></TD>
-  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=Tesco&as_sitesearch=dansinvestments.blogspot.com">Tesco</A></TD><TD>TSCO.L</TD><TD>9.3%<TD>340.5</TD><TD>175.8</TD><TD>83.9</TD><TD><FONT COLOR="#800000">-35.9%</FONT></TD><TD><FONT COLOR="#800000">-13.8%</FONT></TD>
-  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=BP&as_sitesearch=dansinvestments.blogspot.com">BP</A></TD><TD>BP.L</TD><TD>6.0%<TD>379.0</TD><TD>402.6</TD><TD>66.2</TD><TD><FONT COLOR="#008000">23.7%</FONT></TD><TD><FONT COLOR="#008000">6.8%</FONT></TD>
+  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=BRK+OR+Berkshire&as_sitesearch=dansinvestments.blogspot.com">Berkshire Hathaway</A></TD><TD>BRK-B</TD><TD>44.2%<TD>4838.9</TD><TD>9776.5</TD><TD>0.0</TD><TD><FONT COLOR="#008000">102.0%</FONT></TD><TD><FONT COLOR="#008000">24.9%</FONT></TD>
+  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=IS15&as_sitesearch=dansinvestments.blogspot.com">iShares Corporate Bonds</A></TD><TD>IS15.L</TD><TD>24.0%<TD>10401.9</TD><TD>10583.4</TD><TD>1681.5</TD><TD><FONT COLOR="#008000">8.3%</FONT></TD><TD><FONT COLOR="#008000">3.9%</FONT></TD>
+  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=NWBD&as_sitesearch=dansinvestments.blogspot.com">NatWest 9% Preference Share</A></TD><TD>NWBD.L</TD><TD>16.4%<TD>93.5</TD><TD>136.8</TD><TD>27.0</TD><TD><FONT COLOR="#008000">75.1%</FONT></TD><TD><FONT COLOR="#008000">18.9%</FONT></TD>
+  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=Tesco&as_sitesearch=dansinvestments.blogspot.com">Tesco</A></TD><TD>TSCO.L</TD><TD>9.4%<TD>340.5</TD><TD>178.7</TD><TD>83.9</TD><TD><FONT COLOR="#800000">-35.1%</FONT></TD><TD><FONT COLOR="#800000">-13.4%</FONT></TD>
+  <TR VALIGN=TOP><TD><A HREF="http://www.google.co.uk/search?as_q=BP&as_sitesearch=dansinvestments.blogspot.com">BP</A></TD><TD>BP.L</TD><TD>6.0%<TD>379.0</TD><TD>404.1</TD><TD>66.2</TD><TD><FONT COLOR="#008000">24.1%</FONT></TD><TD><FONT COLOR="#008000">6.9%</FONT></TD>
 </TABLE>
 <B>Former holdings</B><BR>
 <TABLE WIDTH=100%% BORDER=1 BORDERCOLOR="#888888" CELLPADDING=2 CELLSPACING=0 CLASS="sortable" style="font-size:12px">
@@ -424,11 +458,11 @@ var data3 = google.visualization.arrayToDataTable([
 </TABLE>
 </TD>
 <TD valign=\"top\">
-<div id="chart_div2" style="width: 600px; height: 400px;"></div>
-<div id="chart_div3" style="width: 600px; height: 400px;"></div>
-<div id="chart_div1" style="width: 600px; height: 400px;"></div>
-<div id="chart_div1" style="width: 600px; height: 400px;"></div>
-<div id="chart_div4" style="width: 600px; height: 400px;"></div>
+<div id="chart_div3" style="width: 600px; height: 300px;"></div>
+<div id="chart_div4" style="width: 600px; height: 300px;"></div>
+<div id="chart_div2" style="width: 600px; height: 300px;"></div>
+<div id="chart_div1" style="width: 300px; height: 300px; display: table-cell"></div>
+<div id="chart_div5" style="width: 300px; height: 300px; display: table-cell"></div>
 </TD>
 </TABLE>
 <!-- Start of StatCounter Code -->
