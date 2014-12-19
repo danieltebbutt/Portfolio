@@ -147,13 +147,33 @@ def compare(startDateString, endDateString = ""):
     
     screenOutput.portfolioDiff(startDate, endDate, history)
         
-def runCommand(command):    
+def runCommand(command):
+    # Handle redirection of stdout to file
+    file = None
+    if ">" in command:
+        command, file = command.split(">")
+        command = command.strip()
+        file = file.strip()
+        oldStdout = sys.stdout
+        sys.stdout = open(file, "w")
+        
+    # Now process command itself
     substrings = command.split()
-    if substrings[0].lower() in commands:        
+    if substrings[0].lower() in commands:
         commands[substrings[0].lower()](*substrings[1:])
     else:
         print "Command unrecognized"
-
+        
+    # And restore stdout, if required
+    if file:
+        sys.stdout.close()
+        sys.stdout = oldStdout
+        print "Output to %s:"%file
+        readfile = open(file, "r")
+        for line in readfile:
+            print line,
+        readfile.close()
+        
 def summary():
     screenOutput.portfolioSummary(portfolio)
     screenOutput.portfolioPurchases(portfolio)
@@ -184,6 +204,7 @@ commands = {
     "publish"     : publish,
     "tax"         : tax,
     "print"       : summary,
+    
 }
 
 # TODO:
