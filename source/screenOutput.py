@@ -145,3 +145,14 @@ class screenOutput:
         print
         print "Total dividends for the year = %.6f NOK"%history.dividendsReceived(startDate, endDate, "NOK")
     
+    @staticmethod
+    def portfolioYield(portfolio, investments):
+        totalDividends = 0
+        for ticker in portfolio.currentTickers():
+            shareYield = investments[ticker].estdivi / portfolio.holdings[ticker].price
+            totalDividends += investments[ticker].estdivi * portfolio.holdings[ticker].number
+            print "%9s estimated yield: %.2f%%"%(ticker, shareYield * 100)
+        print u"Portfolio estimated yield: %.2f%% (\N{pound sign}%.0f)"%((100 * totalDividends / portfolio.value()), totalDividends / 100)
+        
+        
+        

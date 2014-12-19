@@ -190,6 +190,9 @@ def publish():
 def tax(year):
     screenOutput.tax(history, investments, int(year))
      
+def portfolioYield():
+    screenOutput.portfolioYield(portfolio, investments)
+     
 #
 # Main code
 #    
@@ -204,6 +207,7 @@ commands = {
     "publish"     : publish,
     "tax"         : tax,
     "print"       : summary,
+    "yield"       : portfolioYield,
     
 }
 
