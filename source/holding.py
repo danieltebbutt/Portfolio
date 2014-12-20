@@ -98,13 +98,15 @@ class Holding:
         
     def perShareDividends(self, active = False):
         dividends = 0
+        number = 0
         if active:
             purchaseList = self.activePurchases()
         else:
             purchaseList = self.purchases
         for purchase in purchaseList:        
-            dividends += purchase.dividends_received
-        return dividends
+            dividends += purchase.dividends_received * purchase.number_left()
+            number += purchase.number_left()
+        return dividends / number
                 
     def averagePurchasePrice(self):
         numerator = 0
