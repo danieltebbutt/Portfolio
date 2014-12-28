@@ -201,6 +201,22 @@ def tidy():
 def debug():
     pdb.set_trace()
      
+def dividend(ticker, textExdivDate, textDivDate, textPerShareAmount):
+    # Parse dates
+    try:
+        exdivDate = datetime.strptime(textExdivDate, "%Y-%m-%d").date()
+        divDate = datetime.strptime(textDivDate, "%Y-%m-%d").date()
+    except:
+        print "Unable to parse %s or %s as %Y-%m-%d"%(textExdivDate, textDivDate)
+        return
+
+    perShareAmount = float(textPerShareAmount)
+
+    numberHeld = portfolio.holdings[ticker].number
+
+    transaction.writeTransaction(ticker, exdivDate, numberHeld, "EXDIV", perShareAmount, 0)
+    transaction.writeTransaction(ticker, divDate, numberHeld, "DIV", perShareAmount, 0)
+    
 #
 # Main code
 #    
@@ -218,6 +234,7 @@ commands = {
     "yield"       : portfolioYield,
     "tidy"        : tidy,
     "debug"       : debug,
+    "dividend"    : dividend,
     
 }
 
