@@ -158,7 +158,12 @@ class Price:
                                      int(parsedline.group('month')), \
                                      int(parsedline.group('day')))
                 prices[(ticker, date)] = price
-            
+
+    @staticmethod
+    def writePrices(file, prices, keys):
+        for item in keys:
+            file.write("%s,%s,%s\n"%(item[0],item[1].strftime("%Y-%m-%d"),prices[item]))    
+                
     @staticmethod
     def savePricesToDisk(prices):
         # What are we missing?
@@ -166,8 +171,7 @@ class Price:
         Price.loadHistoricalPricesFromDisk(alreadyOnDisk)
         
         with open(LOCAL_PRICES, 'a') as file:
-            for item in set(prices) - set(alreadyOnDisk):
-                file.write("%s,%s,%s\n"%(item[0],item[1].strftime("%Y-%m-%d"),prices[item]))
+            Price.writePrices(file, prices, set(prices) - set(alreadyOnDisk))
             
     @staticmethod
     def lastDates(prices, tickerList):
@@ -178,7 +182,12 @@ class Price:
                 foundAlready.append(price[0])
                 toReturn[price[0]] = price[1]
         return toReturn
-            
+
+    @staticmethod
+    def writeSorted(prices):
+        with open(LOCAL_PRICES, 'w') as file:
+            Price.writePrices(file, prices, sorted(prices))
+        
     # Create a price
     def __init__(self, name, date, price):
         self.name = name

@@ -1,11 +1,12 @@
 #
 # Portfolio Tracker 
 #
-# Refactored as of late 2014
+# Refactored late 2014
 #
 # Copyright 2008 Daniel Tebbutt
 #
 
+import pdb
 import sys
 from datetime import datetime
 from datetime import date
@@ -193,6 +194,13 @@ def tax(year):
 def portfolioYield():
     screenOutput.portfolioYield(portfolio, investments)
      
+def tidy():
+    # Sorts the local price database into a sensible order
+    Price.writeSorted(history.prices)
+     
+def debug():
+    pdb.set_trace()
+     
 #
 # Main code
 #    
@@ -208,6 +216,8 @@ commands = {
     "tax"         : tax,
     "print"       : summary,
     "yield"       : portfolioYield,
+    "tidy"        : tidy,
+    "debug"       : debug,
     
 }
 
