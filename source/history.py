@@ -19,7 +19,7 @@ class History:
     def getPortfolio(self, portfolioDate):
         portfolio = NewPortfolio(portfolioDate)
         for transaction in self.transactions:
-            if transaction.date < portfolioDate:
+            if transaction.date <= portfolioDate:
                 portfolio.applyTransaction(transaction)
         portfolio.notePrices(self.prices)
         return portfolio

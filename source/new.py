@@ -119,16 +119,30 @@ def interactive():
         cmd = raw_input("> ")
         runCommand(cmd)
        
-def help():
-    for command in commands:
-        print command
+def help(arg = None):
+    print "All dates use YYYY-MM-DD format"
+    if arg:
+        print "%s"%arg
+        if not isinstance(commands[arg], tuple):
+            print "Self-explanatory"
+        else:
+            print "%s"%commands[arg][1]
+            if len(commands[arg]) > 2:
+                print "%s %s"%(arg, commands[arg][2])
+    else:
+        print "Available commands:"
+        for key, command in commands.iteritems():
+            if isinstance(command, tuple):            
+                print "%-12s%s"%(key, command[1])
+            else:
+                print "%-12s"%(key)
 
 def compare(startDateString, endDateString = ""):
     # Parse dates
     try:
         startDate = datetime.strptime(startDateString, "%Y-%m-%d").date()
     except:
-        print "Unable to parse %s as %Y-%m-%d"%startDateString
+        print "Unable to parse %s as YYYY-mm-dd"%startDateString
         return
     try:
         if endDateString:
@@ -136,7 +150,7 @@ def compare(startDateString, endDateString = ""):
         else:
             endDate = date.today()
     except:
-        print "Unable to parse %s as %Y-%m-%d"%endDateString
+        print "Unable to parse %s as YYYY-MM-DD"%endDateString
         return
 
     # Validate input
@@ -161,7 +175,10 @@ def runCommand(command):
     # Now process command itself
     substrings = command.split()
     if substrings[0].lower() in commands:
-        commands[substrings[0].lower()](*substrings[1:])
+        fun = commands[substrings[0].lower()]
+        if isinstance(fun, tuple):
+            fun = fun[0]
+        fun(*substrings[1:])
     else:
         print "Command unrecognized"
         
@@ -177,6 +194,8 @@ def runCommand(command):
         
 def summary():
     screenOutput.portfolioSummary(portfolio)
+
+def purchases():
     screenOutput.portfolioPurchases(portfolio)
 
 def income():
@@ -200,7 +219,21 @@ def tidy():
      
 def debug():
     pdb.set_trace()
-     
+    
+def reload():
+    global history
+    global portfolio
+    global investments
+    
+    # Create the complete portfolio history
+    print "Building portfolio history..."
+    history, investments = createHistory()
+    print "Done"
+    print ""
+
+    # Get today's portfolio
+    portfolio = history.getPortfolio(date.today())
+    
 def dividend(ticker, textExdivDate, textDivDate, textPerShareAmount):
     # Parse dates
     try:
@@ -217,38 +250,71 @@ def dividend(ticker, textExdivDate, textDivDate, textPerShareAmount):
     transaction.writeTransaction(ticker, exdivDate, numberHeld, "EXDIV", perShareAmount, 0)
     transaction.writeTransaction(ticker, divDate, numberHeld, "DIV", perShareAmount, 0)
     
+    reload()
+    
+def sell(ticker, textSaleDate, textNumber, textPerShareAmount, textCommission):
+    # Parse date
+    try:
+        saleDate = datetime.strptime(textSaleDate, "%Y-%m-%d").date()
+    except:
+        print "Unable to parse %s as YYYY-MM-DD"%textSaleDate
+        return
+
+    perShareAmount = float(textPerShareAmount)
+    commission = float(textCommission)
+    number = float(textNumber)
+
+    transaction.writeTransaction(ticker, saleDate, number, "SELL", perShareAmount, commission)
+    
+    reload()
+    
+def buy(ticker, textBuyDate, textNumber, textPerShareAmount, textCommission):
+    # Parse date
+    try:
+        buyDate = datetime.strptime(textBuyDate, "%Y-%m-%d").date()
+    except:
+        print "Unable to parse %s as %Y-%m-%d"%textBuyDate
+        return
+
+    perShareAmount = float(textPerShareAmount)
+    commission = float(textCommission)
+    number = float(textNumber)
+
+    transaction.writeTransaction(ticker, buyDate, number, "BUY", perShareAmount, commission)
+    
+    reload()
+    
 #
 # Main code
 #    
 commands = {
-    "interactive" : interactive,
-    "exit"        : sys.exit,        
-    "help"        : help,
-    "summary"     : summary,
-    "income"      : income,
-    "compare"     : compare,
-    "capital"     : capitalGain,
-    "publish"     : publish,
-    "tax"         : tax,
-    "print"       : summary,
-    "yield"       : portfolioYield,
-    "tidy"        : tidy,
-    "debug"       : debug,
-    "dividend"    : dividend,
+    # General
+    "interactive" : (interactive),
+    "exit"        : (sys.exit),  
+    "help"        : (help),
+    "debug"       : (debug, "Enter PDB debugger"),
+    "reload"      : (reload, "Refresh all data"),
+    
+    # Print to screen
+    "summary"     : (summary, "Current portfolio"),
+    "purchases"   : (purchases, "Ranked list of purchases"),
+    "income"      : (income, "All dividends received"),
+    "compare"     : (compare, "Compare two dates", "<earlier date> <later date>"),
+    "capital"     : (capitalGain, "Capital gain/loss summary"),
+    "tax"         : (tax, "Tax details for a given year", "<year>"),
+    "print"       : (summary, "Current portfolio"),
+    "yield"       : (portfolioYield, "Current portfolio estimated forward yield"),
+    
+    # Publish/write
+    "publish"     : (publish, "Publish to web"),
+    "tidy"        : (tidy, "Tidy local price database"),
+    "dividend"    : (dividend, "Record dividend transaction", "<Ex-div-date> <Div-date> <Per-share-amount>"),
+    "sell"        : (sell, "Record sell transaction", "<Sale-date> <Number> <Price> <Commission>"),
+    "buy"         : (buy, "Record buy transaction", "<Buy-date> <Number> <Price> <Commission>"),
     
 }
 
-# TODO:
-# Portfolio yield
-
-# Create the complete portfolio history
-print "Building portfolio history..."
-history, investments = createHistory()
-print "Done"
-print ""
-
-# Get today's portfolio
-portfolio = history.getPortfolio(date.today())
+reload()
 
 # Parse command line args
 for command in sys.argv[1:]:
