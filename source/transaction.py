@@ -29,8 +29,10 @@ class transaction:
         return sorted(transactions, key=lambda x: x.date)
 
     @staticmethod
-    def writeTransaction(ticker, date, number, type, amount, commission):
+    def writeTransaction(ticker, date, number, type, amount, commission, comment = ""):
         with open(portfolio, 'a') as file:
+            if comment:
+                file.write("# %s"%comment)
             file.write("%-7s %-7d %-7d %-7d %-11f %-11s %-11f %-11f\n"%(
                        ticker,
                        date.day,

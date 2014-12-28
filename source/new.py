@@ -326,9 +326,9 @@ commands = {
     # Publish/write
     "publish"      : (publish, "Publish to web"),
     "tidy"         : (tidy, "Tidy local price database"),
-    "dividend"     : (dividend, "Record dividend transaction", "<Ex-div-date> <Div-date> <Per-share-amount>"),
-    "sell"         : (sell, "Record sell transaction", "<Sale-date> <Number> <Price> <Commission>"),
-    "buy"          : (buy, "Record buy transaction", "<Buy-date> <Number> <Price> <Commission>"),
+    "dividend"     : (dividend, "Record dividend transaction", "<ticker> <Ex-div-date> <Div-date> <Per-share-amount>"),
+    "sell"         : (sell, "Record sell transaction", "<ticker> <Sale-date> <Number> <Price> <Commission>"),
+    "buy"          : (buy, "Record buy transaction", "<ticker> <Buy-date> <Number> <Price> <Commission>"),
     
 }
 
