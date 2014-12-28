@@ -154,5 +154,17 @@ class screenOutput:
             print "%9s estimated yield: %.2f%%"%(ticker, shareYield * 100)
         print u"Portfolio estimated yield: %.2f%% (\N{pound sign}%.0f)"%((100 * totalDividends / portfolio.value()), totalDividends / 100)
         
+    @staticmethod
+    def transactions(transactions):
+        for transaction in transactions:
+            print transaction.toString()    
+    
+    @staticmethod
+    def shareInfo(history, ticker, startDate, endDate):
+        print u"%-14s %-10s %-6s %-10s"%("Date", "Price", "Number", "Value")
+        for price in sorted(history.prices):
+            if price[0] == ticker and price[1] >= startDate and price[1] <= endDate:
+                holding = history.getPortfolio(price[1]).holdings[ticker]
+                print u"%-14s %-10.2f %-6d \N{pound sign}%-10.2f"%(price[1], history.prices[price], holding.number, holding.value() / 100)
         
         

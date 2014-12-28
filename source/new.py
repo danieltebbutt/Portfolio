@@ -133,9 +133,9 @@ def help(arg = None):
         print "Available commands:"
         for key, command in commands.iteritems():
             if isinstance(command, tuple):            
-                print "%-12s%s"%(key, command[1])
+                print "%-14s%s"%(key, command[1])
             else:
-                print "%-12s"%(key)
+                print "%-14s"%(key)
 
 def compare(startDateString, endDateString = ""):
     # Parse dates
@@ -284,33 +284,51 @@ def buy(ticker, textBuyDate, textNumber, textPerShareAmount, textCommission):
     
     reload()
     
+def transactions():
+    screenOutput.transactions(history.transactions)
+    
+def shareInfo(ticker, startDateString = None, endDateString = None):
+    if not startDateString:
+        startDate = history.transactions[0].date
+    else:
+        startDate = datetime.strptime(startDateString, "%Y-%m-%d").date() 
+
+    if not endDateString:
+        endDate = date.today()
+    else:
+        endDate = datetime.strptime(endDateString, "%Y-%m-%d").date()
+        
+    screenOutput.shareInfo(history, ticker, startDate, endDate)
+    
 #
 # Main code
 #    
 commands = {
     # General
-    "interactive" : (interactive),
-    "exit"        : (sys.exit),  
-    "help"        : (help),
-    "debug"       : (debug, "Enter PDB debugger"),
-    "reload"      : (reload, "Refresh all data"),
+    "interactive"  : (interactive),
+    "exit"         : (sys.exit),  
+    "help"         : (help),
+    "debug"        : (debug, "Enter PDB debugger"),
+    "reload"       : (reload, "Refresh all data"),
     
     # Print to screen
-    "summary"     : (summary, "Current portfolio"),
-    "purchases"   : (purchases, "Ranked list of purchases"),
-    "income"      : (income, "All dividends received"),
-    "compare"     : (compare, "Compare two dates", "<earlier date> <later date>"),
-    "capital"     : (capitalGain, "Capital gain/loss summary"),
-    "tax"         : (tax, "Tax details for a given year", "<year>"),
-    "print"       : (summary, "Current portfolio"),
-    "yield"       : (portfolioYield, "Current portfolio estimated forward yield"),
+    "summary"      : (summary, "Current portfolio"),
+    "purchases"    : (purchases, "Ranked list of purchases"),
+    "income"       : (income, "All dividends received"),
+    "compare"      : (compare, "Compare two dates", "<earlier date> <later date>"),
+    "capital"      : (capitalGain, "Capital gain/loss summary"),
+    "tax"          : (tax, "Tax details for a given year", "<year>"),
+    "print"        : (summary, "Current portfolio"),
+    "yield"        : (portfolioYield, "Current portfolio estimated forward yield"),
+    "transactions" : (transactions, "List of all transactions"),
+    "shareinfo"    : (shareInfo, "Info on a particular share", "<ticker> [startDate] [endDate]"),
     
     # Publish/write
-    "publish"     : (publish, "Publish to web"),
-    "tidy"        : (tidy, "Tidy local price database"),
-    "dividend"    : (dividend, "Record dividend transaction", "<Ex-div-date> <Div-date> <Per-share-amount>"),
-    "sell"        : (sell, "Record sell transaction", "<Sale-date> <Number> <Price> <Commission>"),
-    "buy"         : (buy, "Record buy transaction", "<Buy-date> <Number> <Price> <Commission>"),
+    "publish"      : (publish, "Publish to web"),
+    "tidy"         : (tidy, "Tidy local price database"),
+    "dividend"     : (dividend, "Record dividend transaction", "<Ex-div-date> <Div-date> <Per-share-amount>"),
+    "sell"         : (sell, "Record sell transaction", "<Sale-date> <Number> <Price> <Commission>"),
+    "buy"          : (buy, "Record buy transaction", "<Buy-date> <Number> <Price> <Commission>"),
     
 }
 
