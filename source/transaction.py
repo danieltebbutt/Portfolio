@@ -3,15 +3,16 @@
 # ex-dividend date, scrip issue, rights issue, or similar.
 #
 
+import os
 import re
 import datetime
 
-TRANSACTION = re.compile('(?P<stock>[\w.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
+TRANSACTION = re.compile('(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
                          '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
 
 ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
                                                   
-portfolio = ".\\data\\portfolio.txt"                       
+portfolio = ".\\data\\portfolio.txt"                                              
                        
 dollar_sign=u'\N{dollar sign}'
 pound_sign=u'\N{pound sign}'
@@ -19,9 +20,15 @@ pound_sign=u'\N{pound sign}'
 class transaction:
 
     @staticmethod
-    def readTransactions():
+    def readTransactions(inputFile = None):
+        if inputFile:
+            portfolioFile = inputFile
+        else:
+            portfolioFile = portfolio
+        
         transactions = []
-        for line in open(portfolio):
+        print portfolioFile
+        for line in open(portfolioFile):
             if transaction.valid(line):
                 tran = transaction(line)
                 if tran.date <= datetime.date.today():
@@ -29,8 +36,25 @@ class transaction:
         return sorted(transactions, key=lambda x: x.date)
 
     @staticmethod
-    def writeTransaction(ticker, date, number, type, amount, commission, comment = ""):
-        with open(portfolio, 'a') as file:
+    def writeTransactions(transactionList, inputFile):
+        os.remove(inputFile)
+        for tran in transactionList:
+            transaction.writeTransaction(tran.ticker, 
+                                         tran.date,
+                                         tran.number,
+                                         tran.action,
+                                         tran.price,
+                                         tran.comm,
+                                         inputFile = inputFile)                                       
+        
+    @staticmethod
+    def writeTransaction(ticker, date, number, type, amount, commission, comment = "", inputFile = ""):
+        if inputFile:
+            portfolioFile = inputFile
+        else:
+            portfolioFile = portfolio
+            
+        with open(portfolioFile, 'a') as file:
             if comment:
                 file.write("# %s"%comment)
             file.write("%-7s %-7d %-7d %-7d %-11f %-11s %-11f %-11f\n"%(

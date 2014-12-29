@@ -6,7 +6,7 @@ import datetime
 import re
 
 # A line from stocks.txt
-STOCK=re.compile('(?P<stock>[\w.-]+),\s+(?P<sector>[\w\d.]+),\s+'\
+STOCK=re.compile('(?P<stock>[\w^.-]+),\s+(?P<sector>[\w\d.]+),\s+'\
                  '(?P<class>[\w\d.]+),\s+(?P<region>[\w\d.]+),\s+(?P<size>[\w\d.]+),\s+(?P<estdivi>[\d.]+),\s+(?P<isin>[\w\d-]+),\s+(?P<name>[\d\w. \%<>\"=\/\&\[\]\:\=\?\+]+)\s*\n')
 
 filename = ".\\data\\stocks.csv"

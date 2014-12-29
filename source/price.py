@@ -13,7 +13,7 @@ YAHOODAY=re.compile('(?P<date>[\d-]+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>
                     '(?P<close>[\d.]+),(?P<volume>[\d.]+),(?P<adjclose>[\d.]+)')
 
 # A line from Yahoo (tracking)
-YAHOOSTOCK=re.compile('\"(?P<stock>[\w.-]+)\",(?P<price>[\d.]+)[, +-/\d:PAM]*')
+YAHOOSTOCK=re.compile('\"(?P<stock>[\w.-\^]+)\",(?P<price>[\d.]+)[, +-/\d:PAM]*')
 
 # A line from oanda.com's exchange rate history
 EXCHANGE=re.compile('(?P<month>\d+)/(?P<day>\d+)/(?P<year>\d+),(?P<rate>[\d.]+)')

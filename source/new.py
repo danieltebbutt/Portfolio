@@ -8,6 +8,7 @@
 
 import pdb
 import sys
+import copy
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
@@ -23,10 +24,15 @@ from urlcache import urlcache
 
 import newPublish
 
+TEMP_PORTFOLIO = ".\\tempPortfolio.txt"
+
 # Cache all URLs that we are going to load from later
 def cacheUrls(tickerList, currencyList, investments, history, startDate, prices):
     urls = []
-    urls.append(Price.currentPricesUrl(history.currentTickers()))
+    if history:
+        urls.append(Price.currentPricesUrl(history.currentTickers()))
+    else:
+        urls.append(Price.currentPricesUrl(tickerList))
     
     lastDates = Price.lastDates(prices, currencyList + tickerList)
     for ticker in currencyList + tickerList:
@@ -46,21 +52,27 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
             currencyInfo.append((currency, lastDates[currency], url))
     
     for ticker in tickerList:
-        if history.lastHeld(ticker) - timedelta(days = 1) > lastDates[ticker]:
+        if history:
+            lastHeld = history.lastHeld(ticker)
+            firstHeld = history.firstHeld(ticker)
+        else:
+            lastHeld = date.today()
+            firstHeld = startDate
+        if lastHeld - timedelta(days = 1) > lastDates[ticker]:
             url = Price.historicalPricesUrl(ticker, 
-                                            max(lastDates[ticker], history.firstHeld(ticker)), 
-                                            history.lastHeld(ticker), 
+                                            max(lastDates[ticker], firstHeld), 
+                                            lastHeld, 
                                             currency = False)
             urls.extend(url)
-            tickerInfo.append((ticker, max(lastDates[ticker], history.firstHeld(ticker)), history.lastHeld(ticker), url))
+            tickerInfo.append((ticker, max(lastDates[ticker], firstHeld), lastHeld, url))
      
     urlCache = urlcache(urls)
     urlCache.cache_urls()
     return urlCache, currencyInfo, tickerInfo
 
-def createHistory():
+def createHistory(portfolioFile = None):
     # Read all transactions from disk    
-    transactions = transaction.readTransactions()
+    transactions = transaction.readTransactions(portfolioFile)
     startDate = transactions[0].date
 
     # And all investments
@@ -137,7 +149,7 @@ def help(arg = None):
             else:
                 print "%-14s"%(key)
 
-def compare(startDateString, endDateString = ""):
+def compareDates(startDateString, endDateString = ""):
     # Parse dates
     try:
         startDate = datetime.strptime(startDateString, "%Y-%m-%d").date()
@@ -162,6 +174,45 @@ def compare(startDateString, endDateString = ""):
     
     screenOutput.portfolioDiff(startDate, endDate, history)
         
+def compareShare(ticker):
+    # Get price info about the ticker
+    newPrices = {}
+    Price.loadHistoricalPricesFromDisk(newPrices)
+    urlCache, currencyInfo, tickerInfoList = cacheUrls([ticker], [], [], None, history.transactions[0].date, newPrices)
+    Price.loadCurrentPricesFromWeb([ticker], newPrices, urlCache)
+    for tickerInfo in tickerInfoList:
+        Price.loadHistoricalPricesFromWeb(tickerInfo[0], tickerInfo[1], tickerInfo[2], newPrices, urlCache)
+    Price.fixPriceGaps(newPrices)    
+    urlCache.clean_urls()
+
+    # Generate a new portfolio file with all tickers replaced with this one.
+    newTransactions = []
+    for tran in history.transactions:
+        if tran.action == "BUY" or tran.action == "SELL":
+            newTran = copy.copy(tran)
+            newTran.ticker = ticker
+            value = newTran.number * newTran.price
+            newTran.price = newPrices[(ticker, tran.date)]
+            newTran.number = value / newTran.price
+            newTransactions.append(newTran)
+    transaction.writeTransactions(newTransactions, TEMP_PORTFOLIO)          
+    
+    # Now build an alternate history based on these new transactions
+    print "Building portfolio history..."
+    newHistory, newInvestments = createHistory(TEMP_PORTFOLIO)
+    print "Done"
+    print ""
+    newPortfolio = newHistory.getPortfolio(date.today())    
+
+    # And print some info
+    print "New / old capital gain: %.2f / %.2f"%(newPortfolio.capitalGain() / 100, portfolio.capitalGain() / 100)
+    print "old dividends: %.2f"%(portfolio.totalDividends() / 100)
+    #screenOutput.portfolioPurchases(newPortfolio)
+    #screenOutput.portfolioSummary(newPortfolio)
+    #screenOutput.shareInfo(newHistory, "^FTSE", newTransactions[0].date, date.today())
+    #print "Existing portfolio average yield: %.2f%%"%((((1 + (portfolio.totalDividends() / history.basisForReturn(history.startDate(), history.endDate()))) ** (365.00 / (history.endDate() - history.startDate()).days)) - 1) * 100)
+    
+       
 def runCommand(command):
     # Handle redirection of stdout to file
     file = None
@@ -315,7 +366,8 @@ commands = {
     "summary"      : (summary, "Current portfolio"),
     "purchases"    : (purchases, "Ranked list of purchases"),
     "income"       : (income, "All dividends received"),
-    "compare"      : (compare, "Compare two dates", "<earlier date> <later date>"),
+    "comparedates" : (compareDates, "Compare two dates", "<earlier date> <later date>"),
+    "compareshare" : (compareShare, "Compare portfolio with share or index", "<ticker>"),
     "capital"      : (capitalGain, "Capital gain/loss summary"),
     "tax"          : (tax, "Tax details for a given year", "<year>"),
     "print"        : (summary, "Current portfolio"),
