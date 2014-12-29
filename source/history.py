@@ -76,13 +76,7 @@ class History:
             portfolio.notePrices(self.prices)
             yield portfolio
             currentDate += timedelta(days = 1)
-                        
-    def basisForReturn(self, startDate, endDate):                
-        while currentDate <= endDate:            
-            portfolio = self.getPortfolio(currentDate)
-            yield portfolio
-            currentDate += timedelta(days = 1)
-        
+            
     def basisForReturn(self, startDate, endDate):
         numerator = 0
         portfolio = self.getPortfolio(startDate)
@@ -90,7 +84,7 @@ class History:
         for portfolio in self.getPortfolios(startDate, endDate):
             numerator += portfolio.netInvested() + modifier
         
-        return numerator / ((endDate - startDate).days)
+        return numerator / ((endDate - startDate).days + 1)
 
     def peakValue(self, startDate = None, endDate = None):
         if not startDate:
