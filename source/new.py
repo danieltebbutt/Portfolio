@@ -1,5 +1,5 @@
 #
-# Portfolio Tracker 
+# Portfolio Tracker
 #
 # Refactored late 2014
 #
@@ -33,24 +33,30 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
         urls.append(Price.currentPricesUrl(history.currentTickers()))
     else:
         urls.append(Price.currentPricesUrl(tickerList))
-    
-    lastDates = Price.lastDates(prices, currencyList + tickerList)
+
+    # !! Bit hacky - want to force ourselves to get all data if we're getting comparison info
+    # Better to spot if we're missing earlier prices and gather them.
+    if history:
+        lastDates = Price.lastDates(prices, currencyList + tickerList)
+    else:
+        lastDates = {}
+
     for ticker in currencyList + tickerList:
         if ticker not in lastDates:
             lastDates[ticker] = startDate
-    
+
     currencyInfo = []
     tickerInfo = []
-    
+
     for currency in currencyList:
         if date.today() > lastDates[currency]:
-            url = Price.historicalPricesUrl(currency, 
-                                            lastDates[currency], 
-                                            date.today(), 
+            url = Price.historicalPricesUrl(currency,
+                                            lastDates[currency],
+                                            date.today(),
                                             currency = True)
             urls.extend(url)
             currencyInfo.append((currency, lastDates[currency], url))
-    
+
     for ticker in tickerList:
         if history:
             lastHeld = history.lastHeld(ticker)
@@ -59,19 +65,19 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
             lastHeld = date.today()
             firstHeld = startDate
         if lastHeld - timedelta(days = 1) > lastDates[ticker]:
-            url = Price.historicalPricesUrl(ticker, 
-                                            max(lastDates[ticker], firstHeld), 
-                                            lastHeld, 
+            url = Price.historicalPricesUrl(ticker,
+                                            max(lastDates[ticker], firstHeld),
+                                            lastHeld,
                                             currency = False)
             urls.extend(url)
             tickerInfo.append((ticker, max(lastDates[ticker], firstHeld), lastHeld, url))
-     
+
     urlCache = urlcache(urls)
     urlCache.cache_urls()
     return urlCache, currencyInfo, tickerInfo
 
 def createHistory(portfolioFile = None):
-    # Read all transactions from disk    
+    # Read all transactions from disk
     transactions = transaction.readTransactions(portfolioFile)
     startDate = transactions[0].date
 
@@ -84,8 +90,8 @@ def createHistory(portfolioFile = None):
         if trans.ticker not in tickerList:
             tickerList.append(trans.ticker)
 
-    # Hard code currency list.  !! Should pick these out of investments really.        
-    currencyList = ["USD", "Euro", "NOK"]        
+    # Hard code currency list.  !! Should pick these out of investments really.
+    currencyList = ["USD", "Euro", "NOK"]
 
     # Build a history of our transactions
     history = History(transactions)
@@ -99,10 +105,10 @@ def createHistory(portfolioFile = None):
 
     # Load currency histories
     for currency in currencyInfo:
-        Price.getCurrencyHistory(currency[0], 
-                                 currency[1], 
-                                 prices, 
-                                 urlCache,                             
+        Price.getCurrencyHistory(currency[0],
+                                 currency[1],
+                                 prices,
+                                 urlCache,
                                  currency[2])
 
     # Load current prices from the Web
@@ -113,7 +119,7 @@ def createHistory(portfolioFile = None):
         Price.loadHistoricalPricesFromWeb(ticker[0], ticker[1], ticker[2], prices, urlCache)
 
     # Fill in any gaps
-    Price.fixPriceGaps(prices)    
+    Price.fixPriceGaps(prices)
 
     # Give the prices to our history
     history.notePrices(prices)
@@ -123,14 +129,14 @@ def createHistory(portfolioFile = None):
 
     # Now save any new data to disk
     Price.savePricesToDisk(prices)
-    
+
     return (history, investments)
-    
+
 def interactive():
     while True:
         cmd = raw_input("> ")
         runCommand(cmd)
-       
+
 def help(arg = None):
     print "All dates use YYYY-MM-DD format"
     if arg:
@@ -144,7 +150,7 @@ def help(arg = None):
     else:
         print "Available commands:"
         for key, command in commands.iteritems():
-            if isinstance(command, tuple):            
+            if isinstance(command, tuple):
                 print "%-14s%s"%(key, command[1])
             else:
                 print "%-14s"%(key)
@@ -171,9 +177,9 @@ def compareDates(startDateString, endDateString = ""):
         return
     elif endDate > date.today():
         endDate = date.today()
-    
+
     screenOutput.portfolioDiff(startDate, endDate, history)
-        
+
 def compareShare(ticker):
     # Get price info about the ticker
     newPrices = {}
@@ -182,7 +188,7 @@ def compareShare(ticker):
     Price.loadCurrentPricesFromWeb([ticker], newPrices, urlCache)
     for tickerInfo in tickerInfoList:
         Price.loadHistoricalPricesFromWeb(tickerInfo[0], tickerInfo[1], tickerInfo[2], newPrices, urlCache)
-    Price.fixPriceGaps(newPrices)    
+    Price.fixPriceGaps(newPrices)
     urlCache.clean_urls()
 
     # Generate a new portfolio file with all tickers replaced with this one.
@@ -195,24 +201,20 @@ def compareShare(ticker):
             newTran.price = newPrices[(ticker, tran.date)]
             newTran.number = value / newTran.price
             newTransactions.append(newTran)
-    transaction.writeTransactions(newTransactions, TEMP_PORTFOLIO)          
-    
+    transaction.writeTransactions(newTransactions, TEMP_PORTFOLIO)
+
     # Now build an alternate history based on these new transactions
     print "Building portfolio history..."
     newHistory, newInvestments = createHistory(TEMP_PORTFOLIO)
     print "Done"
     print ""
-    newPortfolio = newHistory.getPortfolio(date.today())    
+    newPortfolio = newHistory.getPortfolio(date.today())
 
     # And print some info
-    print "New / old capital gain: %.2f / %.2f"%(newPortfolio.capitalGain() / 100, portfolio.capitalGain() / 100)
-    print "old dividends: %.2f"%(portfolio.totalDividends() / 100)
-    #screenOutput.portfolioPurchases(newPortfolio)
-    #screenOutput.portfolioSummary(newPortfolio)
-    #screenOutput.shareInfo(newHistory, "^FTSE", newTransactions[0].date, date.today())
-    #print "Existing portfolio average yield: %.2f%%"%((((1 + (portfolio.totalDividends() / history.basisForReturn(history.startDate(), history.endDate()))) ** (365.00 / (history.endDate() - history.startDate()).days)) - 1) * 100)
-    
-       
+    print u"Hypothetical / real capital gain:   \N{pound sign}%.2f / \N{pound sign}%.2f"%(newPortfolio.capitalGain() / 100, portfolio.capitalGain() / 100)
+    print u"Real portfolio dividends received:  \N{pound sign}%.2f"%(portfolio.totalDividends() / 100)
+    print "Real portfolio yield:                %.2f%%"%(((portfolio.totalDividends() * 365.0 / (history.endDate() - history.startDate()).days)) * 100 / history.averageValue(history.startDate(), history.endDate()))
+
 def runCommand(command):
     # Handle redirection of stdout to file
     file = None
@@ -222,7 +224,7 @@ def runCommand(command):
         file = file.strip()
         oldStdout = sys.stdout
         sys.stdout = open(file, "w")
-        
+
     # Now process command itself
     substrings = command.split()
     if substrings[0].lower() in commands:
@@ -232,7 +234,7 @@ def runCommand(command):
         fun(*substrings[1:])
     else:
         print "Command unrecognized"
-        
+
     # And restore stdout, if required
     if file:
         sys.stdout.close()
@@ -242,7 +244,7 @@ def runCommand(command):
         for line in readfile:
             print line,
         readfile.close()
-        
+
 def summary():
     screenOutput.portfolioSummary(portfolio)
 
@@ -251,31 +253,31 @@ def purchases():
 
 def income():
     screenOutput.income(history.transactions)
-        
+
 def capitalGain():
-    screenOutput.capitalGain(portfolio)        
-        
+    screenOutput.capitalGain(portfolio)
+
 def publish():
     newPublish.mainPage(history, portfolio, investments)
-     
+
 def tax(year):
     screenOutput.tax(history, investments, int(year))
-     
+
 def portfolioYield():
     screenOutput.portfolioYield(portfolio, investments)
-     
+
 def tidy():
     # Sorts the local price database into a sensible order
     Price.writeSorted(history.prices)
-     
+
 def debug():
     pdb.set_trace()
-    
+
 def reload():
     global history
     global portfolio
     global investments
-    
+
     # Create the complete portfolio history
     print "Building portfolio history..."
     history, investments = createHistory()
@@ -284,7 +286,7 @@ def reload():
 
     # Get today's portfolio
     portfolio = history.getPortfolio(date.today())
-    
+
 def dividend(ticker, textExdivDate, textDivDate, textPerShareAmount):
     # Parse dates
     try:
@@ -300,9 +302,9 @@ def dividend(ticker, textExdivDate, textDivDate, textPerShareAmount):
 
     transaction.writeTransaction(ticker, exdivDate, numberHeld, "EXDIV", perShareAmount, 0)
     transaction.writeTransaction(ticker, divDate, numberHeld, "DIV", perShareAmount, 0)
-    
+
     reload()
-    
+
 def sell(ticker, textSaleDate, textNumber, textPerShareAmount, textCommission):
     # Parse date
     try:
@@ -316,9 +318,9 @@ def sell(ticker, textSaleDate, textNumber, textPerShareAmount, textCommission):
     number = float(textNumber)
 
     transaction.writeTransaction(ticker, saleDate, number, "SELL", perShareAmount, commission)
-    
+
     reload()
-    
+
 def buy(ticker, textBuyDate, textNumber, textPerShareAmount, textCommission):
     # Parse date
     try:
@@ -332,36 +334,36 @@ def buy(ticker, textBuyDate, textNumber, textPerShareAmount, textCommission):
     number = float(textNumber)
 
     transaction.writeTransaction(ticker, buyDate, number, "BUY", perShareAmount, commission)
-    
+
     reload()
-    
+
 def transactions():
     screenOutput.transactions(history.transactions)
-    
+
 def shareInfo(ticker, startDateString = None, endDateString = None):
     if not startDateString:
         startDate = history.transactions[0].date
     else:
-        startDate = datetime.strptime(startDateString, "%Y-%m-%d").date() 
+        startDate = datetime.strptime(startDateString, "%Y-%m-%d").date()
 
     if not endDateString:
         endDate = date.today()
     else:
         endDate = datetime.strptime(endDateString, "%Y-%m-%d").date()
-        
+
     screenOutput.shareInfo(history, ticker, startDate, endDate)
-    
+
 #
 # Main code
-#    
+#
 commands = {
     # General
     "interactive"  : (interactive),
-    "exit"         : (sys.exit),  
+    "exit"         : (sys.exit),
     "help"         : (help),
     "debug"        : (debug, "Enter PDB debugger"),
     "reload"       : (reload, "Refresh all data"),
-    
+
     # Print to screen
     "summary"      : (summary, "Current portfolio"),
     "purchases"    : (purchases, "Ranked list of purchases"),
@@ -374,14 +376,14 @@ commands = {
     "yield"        : (portfolioYield, "Current portfolio estimated forward yield"),
     "transactions" : (transactions, "List of all transactions"),
     "shareinfo"    : (shareInfo, "Info on a particular share", "<ticker> [startDate] [endDate]"),
-    
+
     # Publish/write
     "publish"      : (publish, "Publish to web"),
     "tidy"         : (tidy, "Tidy local price database"),
     "dividend"     : (dividend, "Record dividend transaction", "<ticker> <Ex-div-date> <Div-date> <Per-share-amount>"),
     "sell"         : (sell, "Record sell transaction", "<ticker> <Sale-date> <Number> <Price> <Commission>"),
     "buy"          : (buy, "Record buy transaction", "<ticker> <Buy-date> <Number> <Price> <Commission>"),
-    
+
 }
 
 reload()
@@ -389,4 +391,3 @@ reload()
 # Parse command line args
 for command in sys.argv[1:]:
     runCommand(command)
-    

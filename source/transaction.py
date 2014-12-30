@@ -11,12 +11,12 @@ TRANSACTION = re.compile('(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+
                          '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
 
 ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
-                                                  
-portfolio = ".\\data\\portfolio.txt"                                              
-                       
+
+portfolio = ".\\data\\portfolio.txt"
+
 dollar_sign=u'\N{dollar sign}'
 pound_sign=u'\N{pound sign}'
-                       
+
 class transaction:
 
     @staticmethod
@@ -25,7 +25,7 @@ class transaction:
             portfolioFile = inputFile
         else:
             portfolioFile = portfolio
-        
+
         transactions = []
         print portfolioFile
         for line in open(portfolioFile):
@@ -37,23 +37,25 @@ class transaction:
 
     @staticmethod
     def writeTransactions(transactionList, inputFile):
+        with open(inputFile, 'w') as file:
+            pass
         os.remove(inputFile)
         for tran in transactionList:
-            transaction.writeTransaction(tran.ticker, 
+            transaction.writeTransaction(tran.ticker,
                                          tran.date,
                                          tran.number,
                                          tran.action,
                                          tran.price,
                                          tran.comm,
-                                         inputFile = inputFile)                                       
-        
+                                         inputFile = inputFile)
+
     @staticmethod
     def writeTransaction(ticker, date, number, type, amount, commission, comment = "", inputFile = ""):
         if inputFile:
             portfolioFile = inputFile
         else:
             portfolioFile = portfolio
-            
+
         with open(portfolioFile, 'a') as file:
             if comment:
                 file.write("# %s"%comment)
@@ -68,7 +70,7 @@ class transaction:
                        commission,
                        ))
         pass
-        
+
     #
     # Create a transaction.
     #
@@ -83,12 +85,12 @@ class transaction:
         #
         self.stock=parsedline.group('stock')
         self.ticker = self.stock
-        
+
         day=int(parsedline.group('day'))
         month=int(parsedline.group('month'))
         year=int(parsedline.group('year'))
         self.date = datetime.date(year, month, day)
-        
+
         self.number=float(parsedline.group('number'))
         self.action=parsedline.group('action')
         self.price=float(parsedline.group('price'))
@@ -150,7 +152,7 @@ class transaction:
         else:
             raise Exception("Unrecognized field: %s"%self.action)
 
-    def applyTransaction(self, shares, cash):        
+    def applyTransaction(self, shares, cash):
         if self.action == "BUY":
             shares += self.number
             cash -= self.number * self.price + self.comm
@@ -173,4 +175,3 @@ class transaction:
         else:
             raise Exception("Unrecognized field: %s"%self.action)
         return (shares, cash)
-        
