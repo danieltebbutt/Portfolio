@@ -27,20 +27,18 @@ import newPublish
 TEMP_PORTFOLIO = ".\\tempPortfolio.txt"
 
 # Cache all URLs that we are going to load from later
-def cacheUrls(tickerList, currencyList, investments, history, startDate, prices):
+def cacheUrls(tickerList, currencyList, investments, history, startDate, prices, forceReload = False):
     urls = []
     if history:
         urls.append(Price.currentPricesUrl(history.currentTickers()))
     else:
         urls.append(Price.currentPricesUrl(tickerList))
 
-    # !! Bit hacky - want to force ourselves to get all data if we're getting comparison info
-    # Better to spot if we're missing earlier prices and gather them.
-    if history:
+    if not forceReload:
         lastDates = Price.lastDates(prices, currencyList + tickerList)
     else:
         lastDates = {}
-
+        
     for ticker in currencyList + tickerList:
         if ticker not in lastDates:
             lastDates[ticker] = startDate
@@ -64,6 +62,7 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
         else:
             lastHeld = date.today()
             firstHeld = startDate
+            
         if lastHeld - timedelta(days = 1) > lastDates[ticker]:
             url = Price.historicalPricesUrl(ticker,
                                             max(lastDates[ticker], firstHeld),
@@ -76,7 +75,7 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
     urlCache.cache_urls()
     return urlCache, currencyInfo, tickerInfo
 
-def createHistory(portfolioFile = None):
+def createHistory(portfolioFile = None, forceReload = False):
     # Read all transactions from disk
     transactions = transaction.readTransactions(portfolioFile)
     startDate = transactions[0].date
@@ -101,7 +100,7 @@ def createHistory(portfolioFile = None):
     Price.loadHistoricalPricesFromDisk(prices)
 
     # Start reading all the HTML we're going to need now.
-    urlCache, currencyInfo, tickerInfo = cacheUrls(tickerList, currencyList, investments, history, startDate, prices)
+    urlCache, currencyInfo, tickerInfo = cacheUrls(tickerList, currencyList, investments, history, startDate, prices, forceReload)
 
     # Load currency histories
     for currency in currencyInfo:
@@ -181,10 +180,14 @@ def compareDates(startDateString, endDateString = ""):
     screenOutput.portfolioDiff(startDate, endDate, history)
 
 def compareShare(ticker):
+    global newHistory
+    global newInvestments
+    global newPortfolio
+    
     # Get price info about the ticker
     newPrices = {}
     Price.loadHistoricalPricesFromDisk(newPrices)
-    urlCache, currencyInfo, tickerInfoList = cacheUrls([ticker], [], [], None, history.transactions[0].date, newPrices)
+    urlCache, currencyInfo, tickerInfoList = cacheUrls([ticker], [], [], None, history.transactions[0].date, newPrices, forceReload = True)
     Price.loadCurrentPricesFromWeb([ticker], newPrices, urlCache)
     for tickerInfo in tickerInfoList:
         Price.loadHistoricalPricesFromWeb(tickerInfo[0], tickerInfo[1], tickerInfo[2], newPrices, urlCache)
@@ -205,7 +208,7 @@ def compareShare(ticker):
 
     # Now build an alternate history based on these new transactions
     print "Building portfolio history..."
-    newHistory, newInvestments = createHistory(TEMP_PORTFOLIO)
+    newHistory, newInvestments = createHistory(TEMP_PORTFOLIO, forceReload = True)
     print "Done"
     print ""
     newPortfolio = newHistory.getPortfolio(date.today())
@@ -363,6 +366,7 @@ commands = {
     "help"         : (help),
     "debug"        : (debug, "Enter PDB debugger"),
     "reload"       : (reload, "Refresh all data"),
+    "eval"         : (eval, "Run a python command", "<args>"),
 
     # Print to screen
     "summary"      : (summary, "Current portfolio"),
