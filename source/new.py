@@ -133,8 +133,12 @@ def createHistory(portfolioFile = None, forceReload = False):
 
 def interactive():
     while True:
-        cmd = raw_input("> ")
-        runCommand(cmd)
+        try:
+            cmd = raw_input("> ")
+            runCommand(cmd)
+        except Exception:
+            print "Error!"
+            print sys.exc_info()
 
 def help(arg = None):
     print "All dates use YYYY-MM-DD format"
