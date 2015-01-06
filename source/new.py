@@ -38,7 +38,7 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices,
         lastDates = Price.lastDates(prices, currencyList + tickerList)
     else:
         lastDates = {}
-        
+
     for ticker in currencyList + tickerList:
         if ticker not in lastDates:
             lastDates[ticker] = startDate
@@ -62,7 +62,7 @@ def cacheUrls(tickerList, currencyList, investments, history, startDate, prices,
         else:
             lastHeld = date.today()
             firstHeld = startDate
-            
+
         if lastHeld - timedelta(days = 1) > lastDates[ticker]:
             url = Price.historicalPricesUrl(ticker,
                                             max(lastDates[ticker], firstHeld),
@@ -187,7 +187,7 @@ def compareShare(ticker):
     global newHistory
     global newInvestments
     global newPortfolio
-    
+
     # Get price info about the ticker
     newPrices = {}
     Price.loadHistoricalPricesFromDisk(newPrices)
@@ -377,6 +377,7 @@ commands = {
     "purchases"    : (purchases, "Ranked list of purchases"),
     "income"       : (income, "All dividends received"),
     "comparedates" : (compareDates, "Compare two dates", "<earlier date> <later date>"),
+    "compare"      : (compareDates, "=comparedates"),
     "compareshare" : (compareShare, "Compare portfolio with share or index", "<ticker>"),
     "capital"      : (capitalGain, "Capital gain/loss summary"),
     "tax"          : (tax, "Tax details for a given year", "<year>"),

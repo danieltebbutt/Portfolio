@@ -44,6 +44,8 @@ class Price:
             price *= 100
         if ticker.find("IS15") != -1 and price < 1000:
             price *= 100
+        if ticker.find("IS15") != -1 and price > 12000:
+            price = 0
         if ticker.find("BRK-B") != -1:
             price *= prices[("USD", priceDate)]
             if price > 10000 and priceDate < datetime.date(year=2010,month=2,day=1):
@@ -124,7 +126,8 @@ class Price:
             ticker = shareData[0]
             price = float(shareData[1])
             price = Price.fixRawPrice(ticker, price, datetime.date.today(), prices)
-            prices[(ticker, datetime.date.today())] = price
+            if price != 0:
+                prices[(ticker, datetime.date.today())] = price
 
         return prices
 
@@ -146,7 +149,8 @@ class Price:
             priceDate = datetime.datetime.strptime(line[0], "%Y-%m-%d").date()
             closePrice = float(line[4])
             closePrice = Price.fixRawPrice(ticker, closePrice, priceDate, prices)
-            prices[(ticker, priceDate)] = closePrice
+            if closePrice != 0:
+                prices[(ticker, priceDate)] = closePrice
 
     # For each investment, get its price history
     @staticmethod
