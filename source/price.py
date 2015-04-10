@@ -16,7 +16,8 @@ YAHOODAY=re.compile('(?P<date>[\d-]+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>
 YAHOOSTOCK=re.compile('\"(?P<stock>[\w^.-]+)\",(?P<price>[\d.]+)[, +-/\d:PAM]*')
 
 # A line from oanda.com's exchange rate history
-EXCHANGE=re.compile('(?P<month>\d+)/(?P<day>\d+)/(?P<year>\d+),(?P<rate>[\d.]+)')
+OLD_EXCHANGE=re.compile('(?P<month>\d+)/(?P<day>\d+)/(?P<year>\d+),(?P<rate>[\d.]+)')
+EXCHANGE=re.compile('"(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)","(?P<rate>[\d.]+)"')
 
 # A line from OtherAssets.txt
 OTHERASSET=re.compile('(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s+(?P<date>\d+/\d+/\d+)\s+(?P<change>[\d.]+)\s*\n')
@@ -28,7 +29,10 @@ TEXTSAVE=re.compile('(?P<ticker>[\w^.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<d
 # PRICE SOURCES
 LATEST_PRICES_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"
 HISTORICAL_SHARE_PRICE_URL = "http://ichart.finance.yahoo.com/table.csv?s=%s&a=%d&b=%d&c=%d&d=%d&e=%d&f=%d&g=d&ignore=.csv"
-HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/convert/fxhistory?date_fmt=us&date=%d/%d/%d&date1=%d/%d/%d&exch=%s&expr=GBP&lang=en&margin_fixed=0&format=CSV&redirected=1"
+OLD_HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/convert/fxhistory?date_fmt=us&date=%d/%d/%d&date1=%d/%d/%d&exch=%s&expr=GBP&lang=en&margin_fixed=0&format=CSV&redirected=1"
+HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/currency/historical-rates/download?quote_currency=%s&end_data=%d-%d-%d&start_date=%d-%d-%d&period=daily&data_range=c&display=absolute&rate=0&price=bid&view=table&base_currency_0=GBP&base_currency_1=&base_currency_2=&base_currency_3=&base_currency_4=&download=csv"
+
+OANDA_MAX_DAYS=28
 
 # MODIFICATIONS
 ROK_BANKRUPT=datetime.date(year=2010,month=11,day=8)
@@ -44,6 +48,8 @@ class Price:
             price *= 100
         if ticker.find("IS15") != -1 and price < 1000:
             price *= 100
+        if ticker.find("IS15") != -1 and price > 13000:
+            price = 0
         if ticker.find("BRK-B") != -1:
             price *= prices[("USD", priceDate)]
             if price > 10000 and priceDate < datetime.date(year=2010,month=2,day=1):
@@ -95,21 +101,32 @@ class Price:
                         lastDate.year))
         else:
             while startDate < lastDate:
-                # Can't get more than 500 days in one GET from oanda
-                if (lastDate - startDate) > datetime.timedelta(days=490):
-                    nextDate = startDate + datetime.timedelta(days=490)
+                # !! Can't get more than 500 days in one GET from oanda
+                # Now only 30
+                if (lastDate - startDate) > datetime.timedelta(days=OANDA_MAX_DAYS):
+                    nextDate = startDate + datetime.timedelta(days=OANDA_MAX_DAYS)
                 else:
                     nextDate = lastDate
 
                 fixedTicker = "EUR" if ticker == "Euro" else ticker
+                # Old version
+                #urls.append(HISTORICAL_CURRENCY_PRICE_URL%(
+                #            nextDate.month,
+                #            nextDate.day,
+                #            (nextDate.year%100),
+                #            startDate.month,
+                #            startDate.day,
+                #            (startDate.year%100),
+                #            fixedTicker))
                 urls.append(HISTORICAL_CURRENCY_PRICE_URL%(
+                            fixedTicker,
+                            nextDate.year,
                             nextDate.month,
                             nextDate.day,
-                            (nextDate.year%100),
+                            startDate.year,
                             startDate.month,
-                            startDate.day,
-                            (startDate.year%100),
-                            fixedTicker))
+                            startDate.day))
+                print urls[-1]
                 startDate = nextDate
 
         return urls
@@ -133,7 +150,8 @@ class Price:
         for url in urls:
             html = urlCache.read_url(url)
             for rate in EXCHANGE.findall(html):
-                currencyDate = datetime.date(int(rate[2]), int(rate[0]), int(rate[1]))
+                #currencyDate = datetime.date(int(rate[2]), int(rate[0]), int(rate[1]))
+                currencyDate = datetime.date(int(rate[0]), int(rate[1]), int(rate[2]))
                 price = float(rate[3]) * 100
                 prices[(currency, currencyDate)] = price
 
@@ -146,7 +164,8 @@ class Price:
             priceDate = datetime.datetime.strptime(line[0], "%Y-%m-%d").date()
             closePrice = float(line[4])
             closePrice = Price.fixRawPrice(ticker, closePrice, priceDate, prices)
-            prices[(ticker, priceDate)] = closePrice
+            if closePrice != 0:
+                prices[(ticker, priceDate)] = closePrice
 
     # For each investment, get its price history
     @staticmethod
@@ -159,7 +178,8 @@ class Price:
                 date = datetime.date(int(parsedline.group('year')), \
                                      int(parsedline.group('month')), \
                                      int(parsedline.group('day')))
-                prices[(ticker, date)] = price
+                if price != 0:
+                    prices[(ticker, date)] = price
             else:
                 print "Duff line in %s: %s"%(LOCAL_PRICES, line)
 

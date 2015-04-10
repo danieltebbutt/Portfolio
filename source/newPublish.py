@@ -158,8 +158,8 @@ def writeProfit(outputfile, history, portfolio, investments):
 var data%d = google.visualization.arrayToDataTable([\n\
 ['Month', 'Profit'],\n"%chartIndex)
     
-    totalDays = history.endDate() - history.startDate()
-    
+    totalDays = datetime.today().date() - history.startDate()
+        
     peakInvested = history.peakInvested()
     for days in range(0, totalDays.days, 28):
         date = history.startDate() + timedelta(days = days)
@@ -194,7 +194,7 @@ def writeSize(outputfile, history, portfolio, investments):
 var data%d = google.visualization.arrayToDataTable([\n\
 ['Month', 'Size'],\n"%chartIndex)
     
-    totalDays = history.endDate() - history.startDate()
+    totalDays = datetime.today().date() - history.startDate()
     
     peakValue = history.peakValue()
     for days in range(0, totalDays.days, 28):
@@ -230,7 +230,7 @@ def writeNet(outputfile, history, portfolio, investments):
 var data%d = google.visualization.arrayToDataTable([\n\
 ['Month', 'Size', 'Net invested'],\n"%chartIndex)
     
-    totalDays = history.endDate() - history.startDate()
+    totalDays = datetime.today().date() - history.startDate()
     
     peakValue = history.peakValue()
     for days in range(0, totalDays.days, 28):
