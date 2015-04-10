@@ -48,7 +48,7 @@ class Price:
             price *= 100
         if ticker.find("IS15") != -1 and price < 1000:
             price *= 100
-        if ticker.find("IS15") != -1 and price > 13000:
+        if ticker.find("IS15") != -1 and price > 12000:
             price = 0
         if ticker.find("BRK-B") != -1:
             price *= prices[("USD", priceDate)]
@@ -141,7 +141,8 @@ class Price:
             ticker = shareData[0]
             price = float(shareData[1])
             price = Price.fixRawPrice(ticker, price, datetime.date.today(), prices)
-            prices[(ticker, datetime.date.today())] = price
+            if price != 0:
+                prices[(ticker, datetime.date.today())] = price
 
         return prices
 
