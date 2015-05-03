@@ -12,7 +12,9 @@ TRANSACTION = re.compile('(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+
 
 ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
 
-portfolio = ".\\data\\portfolio.txt"
+PORTFOLIO_DIR = ".\\data"
+PORTFOLIO_NAME = "portfolio.txt"
+portfolio = "%s\\%s"%(PORTFOLIO_DIR, PORTFOLIO_NAME)
 
 dollar_sign=u'\N{dollar sign}'
 pound_sign=u'\N{pound sign}'
@@ -71,6 +73,10 @@ class transaction:
                        ))
         pass
 
+    @staticmethod
+    def dirAndFile():
+        return {PORTFOLIO_DIR, PORTFOLIO_NAME}
+        
     #
     # Create a transaction.
     #
@@ -175,3 +181,4 @@ class transaction:
         else:
             raise Exception("Unrecognized field: %s"%self.action)
         return (shares, cash)
+

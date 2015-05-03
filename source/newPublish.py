@@ -15,8 +15,10 @@ DESTINATION = "danieltebbutt.com"
 
 chartIndex = 1
 
-def upload(filename):
-    outputfile = open("%s\\%s"%(OUTPUT_DIR, filename), 'rb')
+def upload(filename, local_dir = OUTPUT_DIR):
+    pathAndFile = "%s\\%s"%(local_dir, filename)
+    print pathAndFile
+    outputfile = open(pathAndFile, 'rb')
 
     session = ftplib.FTP("ftp.%s"%DESTINATION)
     password = getpass.getpass("Password?")

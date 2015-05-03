@@ -24,6 +24,18 @@ from urlcache import urlcache
 
 import newPublish
 
+# Hack to workaround Python SSL bug
+import ssl
+from functools import wraps
+def sslwrap(func):
+    @wraps(func)
+    def bar(*args, **kw):
+        kw['ssl_version'] = ssl.PROTOCOL_TLSv1
+        return func(*args, **kw)
+    return bar
+ssl.wrap_socket = sslwrap(ssl.wrap_socket)
+# End hack
+
 TEMP_PORTFOLIO = ".\\tempPortfolio.txt"
 
 # Cache all URLs that we are going to load from later
@@ -310,6 +322,7 @@ def dividend(ticker, textExdivDate, textDivDate, textPerShareAmount):
     transaction.writeTransaction(ticker, exdivDate, numberHeld, "EXDIV", perShareAmount, 0)
     transaction.writeTransaction(ticker, divDate, numberHeld, "DIV", perShareAmount, 0)
 
+    sync()
     reload()
 
 def sell(ticker, textSaleDate, textNumber, textPerShareAmount, textCommission):
@@ -360,6 +373,10 @@ def shareInfo(ticker, startDateString = None, endDateString = None):
 
     screenOutput.shareInfo(history, ticker, startDate, endDate)
 
+def sync():
+    dir, file = transaction.dirAndFile()
+    newPublish.upload(file, dir)
+    
 #
 # Main code
 #
@@ -392,6 +409,7 @@ commands = {
     "dividend"     : (dividend, "Record dividend transaction", "<ticker> <Ex-div-date> <Div-date> <Per-share-amount>"),
     "sell"         : (sell, "Record sell transaction", "<ticker> <Sale-date> <Number> <Price> <Commission>"),
     "buy"          : (buy, "Record buy transaction", "<ticker> <Buy-date> <Number> <Price> <Commission>"),
+    "sync"         : (sync, "Sync portfolio to web"),
 
 }
 
