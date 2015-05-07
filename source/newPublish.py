@@ -8,6 +8,9 @@ from os import listdir
 from os.path import isfile, join
 from datetime import timedelta
 from datetime import datetime
+import ConfigParser
+import boto
+from boto.s3.key import Key
 
 TEMPLATE_DIR = ".\\templates"
 OUTPUT_DIR = ".\\output"
@@ -16,17 +19,30 @@ DESTINATION = "danieltebbutt.com"
 chartIndex = 1
 
 def upload(filename, local_dir = OUTPUT_DIR):
+
     pathAndFile = "%s\\%s"%(local_dir, filename)
-    print pathAndFile
     outputfile = open(pathAndFile, 'rb')
 
-    session = ftplib.FTP("ftp.%s"%DESTINATION)
-    password = getpass.getpass("Password?")
-    session.login(DESTINATION, password)
-    session.storbinary("STOR wwwroot\\%s"%filename, outputfile)
-    outputfile.close()
-    session.quit()
+    config = ConfigParser.ConfigParser()
+    config.readfp(open('portfolio.ini'))
+    type = config.get("newPublish", "type")
+    destination = config.get("newPublish", "destination")
     
+    if type == "FTP":
+        session = ftplib.FTP("ftp.%s"%destination)
+        password = getpass.getpass("Password?")
+        session.login(destination, password)
+        session.storbinary("STOR wwwroot\\%s"%filename, outputfile)
+        session.quit()     
+    elif type == "AWS":
+        s3 = boto.connect_s3()
+        bucket = s3.get_bucket(destination)
+        k = Key(bucket)
+        k.key = filename
+        k.set_contents_from_file(outputfile)    
+
+    outputfile.close()
+        
 def display(filename):
     webbrowser.open("http://www.%s/%s"%(DESTINATION, filename))
 
