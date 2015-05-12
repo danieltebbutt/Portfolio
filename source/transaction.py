@@ -12,9 +12,9 @@ TRANSACTION = re.compile('(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+
 
 ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
 
-PORTFOLIO_DIR = ".\\data"
+PORTFOLIO_DIR = os.path.normpath("./data")
 PORTFOLIO_NAME = "portfolio.txt"
-portfolio = "%s\\%s"%(PORTFOLIO_DIR, PORTFOLIO_NAME)
+portfolio = os.path.normpath("%s/%s"%(PORTFOLIO_DIR, PORTFOLIO_NAME))
 
 dollar_sign=u'\N{dollar sign}'
 pound_sign=u'\N{pound sign}'

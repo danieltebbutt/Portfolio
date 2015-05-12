@@ -2,6 +2,7 @@
 # Price for a particular stock
 #
 
+import os
 import datetime
 import re
 import operator
@@ -23,7 +24,7 @@ EXCHANGE=re.compile('"(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)","(?P<rate>[\d.]
 OTHERASSET=re.compile('(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s+(?P<date>\d+/\d+/\d+)\s+(?P<change>[\d.]+)\s*\n')
 
 # save.csv
-LOCAL_PRICES = ".\\data\\save.csv"
+LOCAL_PRICES = os.path.normpath("./data/save.csv")
 TEXTSAVE=re.compile('(?P<ticker>[\w^.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
 
 # PRICE SOURCES
