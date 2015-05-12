@@ -12,15 +12,15 @@ import ConfigParser
 import boto
 from boto.s3.key import Key
 
-TEMPLATE_DIR = ".\\templates"
-OUTPUT_DIR = ".\\output"
+TEMPLATE_DIR = os.path.normpath("./templates")
+OUTPUT_DIR = os.path.normpath("./output")
 DESTINATION = "danieltebbutt.com"
 
 chartIndex = 1
 
 def upload(filename, local_dir = OUTPUT_DIR):
 
-    pathAndFile = "%s\\%s"%(local_dir, filename)
+    pathAndFile = os.path.normpath("%s/%s"%(local_dir, filename))
     outputfile = open(pathAndFile, 'rb')
 
     config = ConfigParser.ConfigParser()

@@ -9,6 +9,7 @@
 import pdb
 import sys
 import copy
+import os
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
@@ -36,7 +37,7 @@ def sslwrap(func):
 ssl.wrap_socket = sslwrap(ssl.wrap_socket)
 # End hack
 
-TEMP_PORTFOLIO = ".\\tempPortfolio.txt"
+TEMP_PORTFOLIO = os.path.normpath("./tempPortfolio.txt")
 
 # Cache all URLs that we are going to load from later
 def cacheUrls(tickerList, currencyList, investments, history, startDate, prices, forceReload = False):
