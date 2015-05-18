@@ -193,6 +193,7 @@ var data%d = google.visualization.arrayToDataTable([\n\
   var options%d = {\n\
     title: 'Profit',\n\
     legend: {position: 'none'},\n\
+    backgroundColor: { fill: 'transparent' },\n\
   };\n\
 \n\
   var chart%d = new google.visualization.LineChart(document.getElementById('chart_div%d'));\n\
@@ -229,6 +230,7 @@ var data%d = google.visualization.arrayToDataTable([\n\
   var options%d = {\n\
     title: 'Size',\n\
     legend: {position: 'none'},\n\
+    backgroundColor: { fill: 'transparent' },\n\
   };\n\
 \n\
   var chart%d = new google.visualization.LineChart(document.getElementById('chart_div%d'));\n\
@@ -266,6 +268,7 @@ var data%d = google.visualization.arrayToDataTable([\n\
   var options%d = {\n\
     title: 'Size vs Net Invested',\n\
     legend: {position: 'none'},\n\
+    backgroundColor: { fill: 'transparent' },\n\
   };\n\
 \n\
   var chart%d = new google.visualization.LineChart(document.getElementById('chart_div%d'));\n\
@@ -304,6 +307,7 @@ var data%d = google.visualization.arrayToDataTable([\n\
     title: 'Sectors',\n\
     legend: {position: 'none'},\n\
     pieSliceText: 'label',\n\
+    backgroundColor: { fill: 'transparent' },\n\
   };\n\
 \n\
   var chart%d = new google.visualization.PieChart(document.getElementById('chart_div%d'));\n\
@@ -342,6 +346,7 @@ var data%d = google.visualization.arrayToDataTable([\n\
     title: 'Asset classes',\n\
     legend: {position: 'none'},\n\
     pieSliceText: 'label',\n\
+    backgroundColor: { fill: 'transparent' },\n\
   };\n\
 \n\
   var chart%d = new google.visualization.PieChart(document.getElementById('chart_div%d'));\n\
