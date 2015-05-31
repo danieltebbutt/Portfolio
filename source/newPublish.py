@@ -44,6 +44,8 @@ def upload(filename, local_dir = OUTPUT_DIR):
         bucket = s3.get_bucket(destination)
         k = Key(bucket)
         k.key = filename
+        print "Uploading:"
+        print filename
         k.set_contents_from_file(outputfile)
         
         detailPath = join(local_dir, DETAIL_DIR)
@@ -52,6 +54,7 @@ def upload(filename, local_dir = OUTPUT_DIR):
             pathAndFile = join(detailPath, file)
             fileStream = open(pathAndFile, 'rb')
             k.key = posixpath.join(DETAIL_DIR, file)
+            print file
             k.set_contents_from_file(fileStream)
             fileStream.close()
 
@@ -72,7 +75,7 @@ def writeCurrentDetail(history, portfolio, investments, ticker):
     detailFile = open(os.path.join(directory, ticker+".html"), "w")
     
     detailFile.write("<TR><TD COLSPAN=\"2\"><B>%s</B></TD></TR>\n"%investments[ticker].fullname)
-    boughtDates = portfolio.holdings[ticker].boughtDates()
+    boughtDates = portfolio.holdings[ticker].activeBoughtDates()
     if len(boughtDates) == 1:
         detailFile.write("<TR><TD>Bought</TD><TD>%s</TD></TR>\n"%boughtDates[0].strftime("%d %b %Y"))
         detailFile.write("<TR><TD>Holding period</TD><TD>%d days</TD></TR>\n"%portfolio.holdings[ticker].averageHoldingPeriod())

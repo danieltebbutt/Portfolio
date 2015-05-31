@@ -147,3 +147,9 @@ class Holding:
             list.append(purchase.date_bought)
         return list
         
+    def activeBoughtDates(self):
+        list = []
+        for purchase in self.activePurchases():
+            list.append(purchase.date_bought)
+        return list
+                
