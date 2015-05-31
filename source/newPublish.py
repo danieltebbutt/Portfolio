@@ -56,7 +56,11 @@ def upload(filename, local_dir = OUTPUT_DIR):
     outputfile.close()
         
 def display(filename):
-    webbrowser.open("http://www.%s/%s"%(DESTINATION, filename))
+    config = ConfigParser.ConfigParser({ "display" : "no"})
+    config.readfp(open('portfolio.ini'))
+    doDisplay = ("y" in config.get("newPublish", "display"))
+    if doDisplay:
+        webbrowser.open("http://www.%s/%s"%(DESTINATION, filename))
 
 def writeDetail(history, portfolio, investments, ticker):
     directory = os.path.join(OUTPUT_DIR, DETAIL_DIR)
