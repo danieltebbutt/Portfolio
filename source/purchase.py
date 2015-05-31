@@ -59,6 +59,12 @@ class purchase:
     def absolute_profit(self):
         return self.percent_profit() * self.size() / 100 
         
+    def annual_profit(self):
+        return 100 * ((1 + (self.percent_profit() / 100)) ** (365.0 / self.holdingPeriod()) - 1)    
+        
+    def uniqueId(self):
+        return "%s-%s"%(self.ticker, self.date_bought)
+        
     def value(self):
         return self.closing_price() * self.number 
         

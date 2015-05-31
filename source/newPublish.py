@@ -64,16 +64,23 @@ def display(filename):
     if doDisplay:
         webbrowser.open("http://www.%s/%s"%(DESTINATION, filename))
 
-def writeDetail(history, portfolio, investments, ticker):
+def writeCurrentDetail(history, portfolio, investments, ticker):
     directory = os.path.join(OUTPUT_DIR, DETAIL_DIR)
     if not os.path.exists(directory):
         os.makedirs(directory)
         
     detailFile = open(os.path.join(directory, ticker+".html"), "w")
     
-    detailFile.write("<TR><TD COLSPAN=\"2\">%s</TD></TR>\n"%ticker)
-    detailFile.write("<TR><TD>First bought</TD><TD>%d days ago</TD></TR>"%portfolio.holdings[ticker].maxHoldingPeriod())
-    detailFile.write("<TR><TD>Average holding period</TD><TD>%d days</TD></TR>"%portfolio.holdings[ticker].averageHoldingPeriod())
+    detailFile.write("<TR><TD COLSPAN=\"2\"><B>%s</B></TD></TR>\n"%investments[ticker].fullname)
+    boughtDates = portfolio.holdings[ticker].boughtDates()
+    if len(boughtDates) == 1:
+        detailFile.write("<TR><TD>Bought</TD><TD>%s</TD></TR>\n"%boughtDates[0].strftime("%d %b %Y"))
+        detailFile.write("<TR><TD>Holding period</TD><TD>%d days</TD></TR>\n"%portfolio.holdings[ticker].averageHoldingPeriod())
+    else:
+        detailFile.write("<TR><TD ROWSPAN='%d'>Bought</TD><TD>%s</TD></TR>\n"%(len(boughtDates), boughtDates[0].strftime("%d %b %Y")))
+        for date in boughtDates[1:]:
+            detailFile.write("<TR><TD>%s</TD></TR>\n"%date.strftime("%d %b %Y")) 
+        detailFile.write("<TR><TD>Average holding period</TD><TD>%d days</TD></TR>\n"%portfolio.holdings[ticker].averageHoldingPeriod())
 
     initialDate = portfolio.holdings[ticker].firstBought()    
     for year in range(initialDate.year, datetime.today().year + 1):
@@ -93,9 +100,40 @@ def writeDetail(history, portfolio, investments, ticker):
         profit = secondPortfolio.holdings[ticker].activeProfit() - firstPortfolio.holdings[ticker].activeProfit()
         percentProfit = profit / firstPortfolio.holdings[ticker].currentValue()
         
-        detailFile.write("<TR><TD>%d Profit</TD><TD style='color:%s'>%.1f%%</TD></TR>"%(year, 'green' if percentProfit > 0 else 'red', percentProfit * 100))
+        detailFile.write("<TR><TD>%d Profit</TD><TD style='color:%s'>%.1f%%</TD></TR>\n"%(year, 'green' if percentProfit > 0 else 'red', percentProfit * 100))
     if investments[ticker].blogUrl:
         detailFile.write("<TR><TD COLSPAN=\"2\"><A HREF=\"%s\">Blog</A></TD></TR>\n"%investments[ticker].blogUrl)
+    detailFile.close()
+    
+def writePreviousDetail(history, portfolio, investments, purchase):
+    directory = os.path.join(OUTPUT_DIR, DETAIL_DIR)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        
+    detailFile = open(os.path.join(directory, purchase.uniqueId()+".html"), "w")
+    
+    detailFile.write("<TR><TD COLSPAN=\"2\"><B>%s</B></TD></TR>\n"%investments[purchase.ticker].fullname)
+    detailFile.write("<TR><TD>Bought</TD><TD>%s</TD></TR>\n"%purchase.date_bought.strftime("%d %b %Y"))
+    if len(purchase.date_sold) != 1:
+        detailFile.write("<TR><TD ROWSPAN='%d'>Sold</TD><TD>%s</TD></TR>\n"%(len(purchase.date_sold),purchase.date_sold[0].strftime("%d %b %Y")))
+        for date_sold in purchase.date_sold[1:]:
+            detailFile.write("<TR><TD>%s</TD></TR>\n"%date_sold.strftime("%d %b %Y"))                    
+    else:
+        detailFile.write("<TR><TD>Sold</TD><TD>%s</TD></TR>\n"%purchase.date_sold[0].strftime("%d %b %Y"))
+    profit = purchase.percent_profit()
+    detailFile.write("<TR><TD>Profit</TD><TD style='color:%s'>%.1f%%</TD></TR>\n"%(
+                     ("green" if profit > 0 else "red"), 
+                     profit))
+        
+    # Annual profit
+    profit = purchase.annual_profit()
+    detailFile.write("<TR><TD>Annual profit</TD><TD style='color:%s'>%.1f%%</TD></TR>\n"%(
+                     ("green" if profit > 0 else "red"), 
+                     profit))
+    
+    if investments[purchase.ticker].blogUrl:
+        detailFile.write("<TR><TD COLSPAN=\"2\"><A HREF=\"%s\">Blog</A></TD></TR>\n"%investments[purchase.ticker].blogUrl)
+        
     detailFile.close()
     
 def writeScriptHeader(outputfile):
@@ -131,7 +169,7 @@ def writeCurrent(outputfile, history, portfolio, investments):
         holding = portfolio.holdings[ticker]
         outputfile.write("  <TR CLASS=\"CLICKABLE\" VALIGN=TOP onClick=\"detail('%s')\" %s>"%(ticker, MOUSEABLE))
         
-        writeDetail(history, portfolio, investments, ticker)
+        writeCurrentDetail(history, portfolio, investments, ticker)
         
         # Full name
         outputfile.write("<TD>%s</TD>"%investments[ticker].fullname)
@@ -153,14 +191,14 @@ def writeCurrent(outputfile, history, portfolio, investments):
         
         # Profit
         profit = 100 * holding.activeProfit() / holding.activeCost()
-        outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
-                         ("#008000" if profit >= 0 else "#800000"), 
+        outputfile.write("<TD style='color:%s'>%.1f%%</TD>"%(
+                         ("green" if profit > 0 else "red"), 
                          profit))
         
         # Annual profit
         profit = 100 * ((1 + (holding.activeProfit() / holding.activeCost())) ** (365.0 / holding.averageHoldingPeriod()) - 1)
         outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
-                         ("#008000" if profit >= 0 else "#800000"), 
+                         ("#008000" if profit > 0 else "#800000"), 
                          profit))
                          
         outputfile.write("\n")
@@ -188,8 +226,10 @@ def writePrevious(outputfile, history, portfolio, investments):
     purchases.sort(key=lambda x: x.percent_profit(), reverse = True)
 
     for purchase in purchases:
-        outputfile.write("  <TR VALIGN=TOP>")
-        
+        outputfile.write("  <TR CLASS=\"CLICKABLE\" VALIGN=TOP onClick=\"detail('%s')\" %s>"%(purchase.uniqueId(), MOUSEABLE))
+
+        writePreviousDetail(history, portfolio, investments, purchase)
+
         # Full name
         outputfile.write("<TD>%s</TD>"%investments[purchase.ticker].fullname)
         
@@ -207,14 +247,14 @@ def writePrevious(outputfile, history, portfolio, investments):
         
         # Profit
         profit = purchase.percent_profit()
-        outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
-                         ("#008000" if profit >= 0 else "#800000"), 
+        outputfile.write("<TD style='color:%s'>%.1f%%</TD>"%(
+                         ("green" if profit > 0 else "red"), 
                          profit))
         
         # Annual profit
-        profit = 100 * ((1 + (purchase.percent_profit() / 100)) ** (365.0 / purchase.holdingPeriod()) - 1)
-        outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
-                         ("#008000" if profit >= 0 else "#800000"), 
+        profit = purchase.annual_profit()
+        outputfile.write("<TD style='color:%s'>%.1f%%</TD>"%(
+                         ("green" if profit > 0 else "red"), 
                          profit))
                          
         outputfile.write("\n")

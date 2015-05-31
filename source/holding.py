@@ -140,3 +140,10 @@ class Holding:
             if not first or purchase.date_bought < first:
                 first = purchase.date_bought
         return first
+        
+    def boughtDates(self):
+        list = []
+        for purchase in self.purchases:
+            list.append(purchase.date_bought)
+        return list
+        
