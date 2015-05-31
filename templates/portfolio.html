@@ -1,35 +1,33 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <HTML>
 <HEAD>
-<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
 <TITLE>Dan's share portfolio</TITLE>
-<META NAME="GENERATOR" CONTENT="stocktrack.py">
-<META NAME="AUTHOR" CONTENT="Daniel Tebbutt">
-<META NAME="CREATED" CONTENT="20100127;19135800">
-<META NAME="CHANGEDBY" CONTENT="Daniel Tebbutt">
-<META NAME="CHANGED" CONTENT="20100127;19185500">
-<STYLE TYPE="text/css"><!--    @page { margin: 2cm }    P { margin-bottom: 0.21cm }    TD P { margin-bottom: 0cm }--></STYLE>
 <SCRIPT SRC="jquery-1.11.3.js"></SCRIPT>
 <link rel="stylesheet" type="text/css" href="mystyle.css">
-<script src="sorttable.js"></script>
+<script src="portfolio/sorttable.js"></script>
+<script src="portfolio/portfolio.js"></SCRIPT>
 </HEAD>
-<BODY LANG="en-GB" DIR="LTR">
+<BODY>
 <DIV ID="REPLACEME"></DIV>
 <SCRIPT SRC="standard.js"></SCRIPT>
 <STYLE>.dantable, .dantable TD, .dantable TH{font-size:10pt;}</STYLE>
 <DIV>
-<TABLE WIDTH=100% CELLSPACING=2><TD VALIGN="top">
-###CURRENT###
-###PREVIOUS###
-</TD>
-<TD valign="top">
-###PROFIT###
-###SIZE###
-###NET###
-###SECTOR###
-###CLASS###
-</TD>
-</TABLE>
+  <TABLE WIDTH=100% CELLSPACING=2>
+    <TD VALIGN="top">
+    ###CURRENT###
+    ###PREVIOUS###
+    </TD>
+    <TD valign="top">
+    ###PROFIT###
+    ###SIZE###
+    ###NET###
+    ###SECTOR###
+    ###CLASS###
+    </TD>
+  </TABLE>
+</DIV>
+<DIV ID="DETAIL" style="z-index: 10;position: absolute;left: 100;top: 100;font-size:12px;display:none">
+  <TABLE ID="DETAIL_TABLE" onClick="detailBoxHide()" bgcolor=#ffffff BORDER=5 BORDERCOLOR="#ffffff" CELLPADDING=2 CELLSPACING=0  style="font-size:12px">
+  </TABLE>
 </DIV>
 </BODY>
 </HTML>

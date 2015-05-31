@@ -2,6 +2,7 @@
 
 from transaction import transaction
 from purchase import purchase
+import math
 
 class Holding:
 
@@ -127,3 +128,15 @@ class Holding:
             denominator += purchase.number_left()
         return numerator / denominator
         
+    def maxHoldingPeriod(self):
+        maxPeriod = 0
+        for purchase in self.activePurchases():        
+            maxPeriod = max(maxPeriod, purchase.holdingPeriod())
+        return maxPeriod
+        
+    def firstBought(self):
+        first = None
+        for purchase in self.activePurchases():
+            if not first or purchase.date_bought < first:
+                first = purchase.date_bought
+        return first

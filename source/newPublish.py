@@ -11,10 +11,12 @@ from datetime import datetime
 import ConfigParser
 import boto
 from boto.s3.key import Key
+import posixpath
 
 TEMPLATE_DIR = os.path.normpath("./templates")
 OUTPUT_DIR = os.path.normpath("./output")
 DESTINATION = "danieltebbutt.com"
+DETAIL_DIR = "portfolio"
 
 chartIndex = 1
 
@@ -34,18 +36,60 @@ def upload(filename, local_dir = OUTPUT_DIR):
         session.login(destination, password)
         session.storbinary("STOR wwwroot\\%s"%filename, outputfile)
         session.quit()     
+        # !! Need to upload detail files as well
     elif type == "AWS":
         s3 = boto.connect_s3()
         bucket = s3.get_bucket(destination)
         k = Key(bucket)
         k.key = filename
-        k.set_contents_from_file(outputfile)    
+        k.set_contents_from_file(outputfile)
+        
+        detailPath = join(local_dir, DETAIL_DIR)
+        detailFiles = [ f for f in listdir(detailPath) if isfile(join(detailPath,f)) ]
+        for file in detailFiles:
+            pathAndFile = join(detailPath, file)
+            fileStream = open(pathAndFile, 'rb')
+            k.key = posixpath.join(DETAIL_DIR, file)
+            k.set_contents_from_file(fileStream)
+            fileStream.close()
 
     outputfile.close()
         
 def display(filename):
     webbrowser.open("http://www.%s/%s"%(DESTINATION, filename))
 
+def writeDetail(history, portfolio, investments, ticker):
+    directory = os.path.join(OUTPUT_DIR, DETAIL_DIR)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        
+    detailFile = open(os.path.join(directory, ticker+".html"), "w")
+    
+    detailFile.write("<TR><TD COLSPAN=\"2\">%s</TD></TR>\n"%ticker)
+    detailFile.write("<TR><TD>First bought</TD><TD>%d days ago</TD></TR>"%portfolio.holdings[ticker].maxHoldingPeriod())
+    detailFile.write("<TR><TD>Average holding period</TD><TD>%d days</TD></TR>"%portfolio.holdings[ticker].averageHoldingPeriod())
+
+    initialDate = portfolio.holdings[ticker].firstBought()    
+    for year in range(initialDate.year, datetime.today().year + 1):
+        if year == initialDate.year:
+            firstDate = initialDate
+        else:        
+            firstDate = datetime(year = year, month = 1, day = 1).date()
+            
+        if year == datetime.today().year:
+            secondDate = datetime.today().date()
+        else:
+            secondDate = datetime(year = year + 1, month = 1, day = 1).date()
+        
+        firstPortfolio = history.getPortfolio(firstDate)
+        secondPortfolio = history.getPortfolio(secondDate)
+        
+        profit = secondPortfolio.holdings[ticker].activeProfit() - firstPortfolio.holdings[ticker].activeProfit()
+        percentProfit = profit / firstPortfolio.holdings[ticker].currentValue()
+        
+        detailFile.write("<TR><TD>%d Profit</TD><TD style='color:%s'>%.1f%%</TD></TR>"%(year, 'green' if percentProfit > 0 else 'red', percentProfit * 100))
+    detailFile.close()
+    
 def writeScriptHeader(outputfile):
     outputfile.write("\
 <script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script>\n\
@@ -75,11 +119,11 @@ def writeCurrent(outputfile, history, portfolio, investments):
 <TH TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\
 </TR>\n")
 
-    
-
     for ticker in sorted(portfolio.currentTickers(), key=lambda x: portfolio.holdings[x].value(), reverse = True):
         holding = portfolio.holdings[ticker]
-        outputfile.write("  <TR VALIGN=TOP>")
+        outputfile.write("  <TR VALIGN=TOP onClick=\"detail('%s')\">"%ticker)
+        
+        writeDetail(history, portfolio, investments, ticker)
         
         # Full name
         outputfile.write("<TD>%s</TD>"%investments[ticker].fullname)

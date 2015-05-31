@@ -10,10 +10,10 @@ import pdb
 import sys
 import copy
 import os
+import traceback
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
-
 
 from screenOutput import screenOutput
 from price import Price
@@ -151,7 +151,7 @@ def interactive():
             runCommand(cmd)
         except Exception:
             print "Error!"
-            print sys.exc_info()
+            traceback.print_exception(*sys.exc_info())
 
 def help(arg = None):
     print "All dates use YYYY-MM-DD format"
