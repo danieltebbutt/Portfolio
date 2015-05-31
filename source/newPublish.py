@@ -18,6 +18,8 @@ OUTPUT_DIR = os.path.normpath("./output")
 DESTINATION = "danieltebbutt.com"
 DETAIL_DIR = "portfolio"
 
+MOUSEABLE = " onmouseover=\"this.style.background='lightgray'\" onmouseout=\"this.style.background='';\""
+
 chartIndex = 1
 
 def upload(filename, local_dir = OUTPUT_DIR):
@@ -92,6 +94,8 @@ def writeDetail(history, portfolio, investments, ticker):
         percentProfit = profit / firstPortfolio.holdings[ticker].currentValue()
         
         detailFile.write("<TR><TD>%d Profit</TD><TD style='color:%s'>%.1f%%</TD></TR>"%(year, 'green' if percentProfit > 0 else 'red', percentProfit * 100))
+    if investments[ticker].blogUrl:
+        detailFile.write("<TR><TD COLSPAN=\"2\"><A HREF=\"%s\">Blog</A></TD></TR>\n"%investments[ticker].blogUrl)
     detailFile.close()
     
 def writeScriptHeader(outputfile):
@@ -112,20 +116,20 @@ def writeCurrent(outputfile, history, portfolio, investments):
 
     outputfile.write(
 "<TABLE WIDTH=100%% BORDER=1 BORDERCOLOR=\"#888888\" CELLPADDING=2 CELLSPACING=0 CLASS=\"sortable\" style=\"font-size:12px\">\n\
-  <TR VALIGN=TOP>\
-<TH>Share</TH>\
-<TH>Ticker</TH>\
-<TH TITLE=\"Percentage of portfolio value\">Percentage</TH>\
-<TH TITLE=\"Average purchase price\">Bought at (p)</TH>\
-<TH TITLE=\"Current price\">Current (p)</TH>\
-<TH TITLE=\"Average per-share accumulated dividends received\">Dividends (p)</TH>\
-<TH TITLE=\"Average per-share profit, including capital gain and dividends received\">Profit</TH>\
-<TH TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\
+  <TR VALIGN=TOP CLASS=\"clickable\">\
+<TH"+MOUSEABLE+">Share</TH>\
+<TH"+MOUSEABLE+">Ticker</TH>\
+<TH"+MOUSEABLE+" TITLE=\"Percentage of portfolio value\">Percentage</TH>\
+<TH"+MOUSEABLE+" TITLE=\"Average purchase price\">Bought at (p)</TH>\
+<TH"+MOUSEABLE+" TITLE=\"Current price\">Current (p)</TH>\
+<TH"+MOUSEABLE+" TITLE=\"Average per-share accumulated dividends received\">Dividends (p)</TH>\
+<TH"+MOUSEABLE+" TITLE=\"Average per-share profit, including capital gain and dividends received\">Profit</TH>\
+<TH"+MOUSEABLE+" TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\
 </TR>\n")
 
     for ticker in sorted(portfolio.currentTickers(), key=lambda x: portfolio.holdings[x].value(), reverse = True):
         holding = portfolio.holdings[ticker]
-        outputfile.write("  <TR VALIGN=TOP onClick=\"detail('%s')\">"%ticker)
+        outputfile.write("  <TR CLASS=\"CLICKABLE\" VALIGN=TOP onClick=\"detail('%s')\" %s>"%(ticker, MOUSEABLE))
         
         writeDetail(history, portfolio, investments, ticker)
         
@@ -167,14 +171,14 @@ def writePrevious(outputfile, history, portfolio, investments):
     outputfile.write("<B>Former holdings</B><BR>\n")
     outputfile.write(
 "<TABLE WIDTH=100%% BORDER=1 BORDERCOLOR=\"#888888\" CELLPADDING=2 CELLSPACING=0 CLASS=\"sortable\" style=\"font-size:12px\">\n\
-<TR VALIGN=TOP>\n\
-<TH>Share</TH>\n\
-<TH>Ticker</TH>\n\
-<TH TITLE=\"Average purchase price\">Bought at (p)</TH>\n\
-<TH TITLE=\"Average sale price\">Sold at (p)</TH>\n\
-<TH TITLE=\"Average per-share accumulated dividends received\">Dividends (p)</TH>\n\
-<TH TITLE=\"Average per-share profit, including capital gain and dividends received\">Profit</TH>\n\
-<TH TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\n\
+<TR VALIGN=TOP CLASS=\"clickable\">\n\
+<TH"+MOUSEABLE+">Share</TH>\n\
+<TH"+MOUSEABLE+">Ticker</TH>\n\
+<TH"+MOUSEABLE+" TITLE=\"Average purchase price\">Bought at (p)</TH>\n\
+<TH"+MOUSEABLE+" TITLE=\"Average sale price\">Sold at (p)</TH>\n\
+<TH"+MOUSEABLE+" TITLE=\"Average per-share accumulated dividends received\">Dividends (p)</TH>\n\
+<TH"+MOUSEABLE+" TITLE=\"Average per-share profit, including capital gain and dividends received\">Profit</TH>\n\
+<TH"+MOUSEABLE+" TITLE=\"Average annual per-share profit, including capital gain and dividends received\">Annual profit</TH>\n\
 </TR>\n")
 
     purchases = []

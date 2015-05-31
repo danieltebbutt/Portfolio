@@ -9,9 +9,9 @@ import os
 # A line from stocks.txt
 STOCK=re.compile('(?P<stock>[\w^.-]+),\s+(?P<sector>[\w\d.]+),\s+'\
                  '(?P<class>[\w\d.]+),\s+(?P<region>[\w\d.]+),\s+(?P<size>[\w\d.]+),\s+(?P<estdivi>[\d.]+),\s+(?P<isin>[\w\d-]+),\s+(?P<name>[\d\w. \%<>\"=\/\&\[\]\:\=\?\+]+)\s*\n')
+FULLNAME=re.compile('<A HREF="(?P<url>[\d\w.\%=\/\&\[\]\:\=\?\+]+)">(?P<name>[\d\w. \%\"=\/\&\[\]\:\=\?\+]+)</A>')
 
 filename = os.path.normpath("./data/stocks.csv")
-
 
 class investment:
 
@@ -72,7 +72,13 @@ class investment:
         self.first_purchased = first_purchased
         self.estdivi = estdivi
         self.isin = isin
-        self.fullname = fullname
+        parsedName = FULLNAME.match(fullname)
+        if parsedName:
+            self.fullname = parsedName.group('name')
+            self.blogUrl = parsedName.group('url')
+        else:
+            self.fullname = fullname
+            self.blogUrl = None
 
     def history_url(self, start_date, last_date):
         urls = []
