@@ -22,10 +22,7 @@ MOUSEABLE = " onmouseover=\"this.style.background='lightgray'\" onmouseout=\"thi
 
 chartIndex = 1
 
-def upload(filename, local_dir = OUTPUT_DIR):
-
-    pathAndFile = os.path.normpath("%s/%s"%(local_dir, filename))
-    outputfile = open(pathAndFile, 'rb')
+def uploadAll(local_dir = OUTPUT_DIR):
 
     config = ConfigParser.ConfigParser()
     config.readfp(open('portfolio.ini'))
@@ -33,21 +30,34 @@ def upload(filename, local_dir = OUTPUT_DIR):
     destination = config.get("newPublish", "destination")
     
     if type == "FTP":
-        session = ftplib.FTP("ftp.%s"%destination)
-        password = getpass.getpass("Password?")
-        session.login(destination, password)
-        session.storbinary("STOR wwwroot\\%s"%filename, outputfile)
-        session.quit()     
+        #pathAndFile = join(local_dir, filename)
+        #outputfile = open(pathAndFile, 'rb')
+        # !! Need to cope with multiple files
+        print "!! Needs work"
+        #session = ftplib.FTP("ftp.%s"%destination)
+        #password = getpass.getpass("Password?")
+        #session.login(destination, password)
+        #session.storbinary("STOR wwwroot\\%s"%filename, outputfile)
+        #session.quit()     
+        #outputfile.close()
+
         # !! Need to upload detail files as well
-    elif type == "AWS":
+    elif type == "AWS":    
         s3 = boto.connect_s3()
         bucket = s3.get_bucket(destination)
-        k = Key(bucket)
-        k.key = filename
-        print "Uploading:"
-        print filename
-        k.set_contents_from_file(outputfile)
         
+        k = Key(bucket)
+        print "Uploading:"
+
+        templateFiles = [ f for f in listdir(local_dir) if isfile(join(local_dir,f)) ]
+        for file in templateFiles:
+            pathAndFile = join(local_dir, file)
+            fileStream = open(pathAndFile, 'rb')
+            k.key = file
+            print file
+            k.set_contents_from_file(fileStream)
+            fileStream.close()
+
         detailPath = join(local_dir, DETAIL_DIR)
         detailFiles = [ f for f in listdir(detailPath) if isfile(join(detailPath,f)) ]
         for file in detailFiles:
@@ -57,8 +67,6 @@ def upload(filename, local_dir = OUTPUT_DIR):
             print file
             k.set_contents_from_file(fileStream)
             fileStream.close()
-
-    outputfile.close()
         
 def display(filename):
     config = ConfigParser.ConfigParser({ "display" : "no"})
@@ -457,6 +465,30 @@ var data%d = google.visualization.arrayToDataTable([\n\
 def writeDate(outputfile, history, portfolio, investments):
     outputfile.write("%s"%datetime.today().date())            
             
+def writePrivate(outputfile, history, portfolio, investments):
+    outputfile.write("Portfolio summary (%s)<BR>\n"%datetime.today().date())
+    outputfile.write("<BR>\n")
+    outputfile.write("<TABLE>\n")
+    outputfile.write("<TR><TH>Number</TH><TH>Ticker</TH><TH>Cost</TH><TH>Value</TH><TH>Dividends</TH><TH>Profit</TH></TR>")
+    
+    for holding in portfolio.holdings.values():
+        if holding.number != 0:
+            outputfile.write("<TR><TD>%d</TD><TD>%s</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD></TR>"%(\
+                holding.number,
+                holding.ticker,
+                holding.activeCost() / 100,
+                holding.currentValue() / 100,
+                holding.totalDividends() / 100, 
+                holding.activeProfit() / 100))
+    outputfile.write("</TABLE>\n")
+    outputfile.write("<BR>\n")
+    outputfile.write("<TABLE>\n")
+    outputfile.write("<TR><TD>Net invested</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.netInvested() / 100))
+    outputfile.write("<TR><TD>Current value</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.value() / 100))
+    outputfile.write("<TR><TD>Profit</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.totalProfit() / 100))
+    outputfile.write("</TABLE>\n")
+    outputfile.write("<BR>\n")
+            
 def actionTemplate(history, portfolio, investments, template):
     global chartIndex
     
@@ -469,6 +501,7 @@ def actionTemplate(history, portfolio, investments, template):
             "###SECTOR###"       : (writeSector, True, 300),
             "###CLASS###"        : (writeClass, True, 300),
             "###DATE###"         : (writeDate, False ,0),
+            "###PRIVATE###"      : (writePrivate, False, 0),
             }
 
     fileStream = open(join(TEMPLATE_DIR,template), 'r')
@@ -502,7 +535,7 @@ def actionTemplate(history, portfolio, investments, template):
             tags[line.strip()][0](outputfile, history, portfolio, investments)
         else:
             outputfile.write(line)
-    outputfile.close()    
+    outputfile.close()
     
 def mainPage(history, portfolio, investments):
 
@@ -510,7 +543,9 @@ def mainPage(history, portfolio, investments):
 
     for template in templateFiles:
         actionTemplate(history, portfolio, investments, template)
-        upload(template)    
+
+    uploadAll()
+    for template in templateFiles:
         display(template)
     
     
