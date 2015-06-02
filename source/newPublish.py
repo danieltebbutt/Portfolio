@@ -12,6 +12,7 @@ import ConfigParser
 import boto
 from boto.s3.key import Key
 import posixpath
+from htmlOutput import htmlOutput
 
 TEMPLATE_DIR = os.path.normpath("./templates")
 OUTPUT_DIR = os.path.normpath("./output")
@@ -465,30 +466,25 @@ var data%d = google.visualization.arrayToDataTable([\n\
 def writeDate(outputfile, history, portfolio, investments):
     outputfile.write("%s"%datetime.today().date())            
             
-def writePrivate(outputfile, history, portfolio, investments):
-    outputfile.write("Portfolio summary (%s)<BR>\n"%datetime.today().date())
-    outputfile.write("<BR>\n")
-    outputfile.write("<TABLE>\n")
-    outputfile.write("<TR><TH>Number</TH><TH>Ticker</TH><TH>Cost</TH><TH>Value</TH><TH>Dividends</TH><TH>Profit</TH></TR>")
+def writePrivateSummary(outputfile, history, portfolio, investments):
+    outputfile.write(htmlOutput.portfolioSummary(portfolio))
+
+def writePrivateCompare(outputfile, history, portfolio, investments):
+    outputfile.write("Annual performance<BR>\n")
+    for year in range(history.startDate().year, datetime.today().date().year + 1):
+        outputfile.write("<DIV onClick=\"$('#%d').toggle();\">%d<BR></DIV>\n"%(year,year))
+        outputfile.write("<DIV id='%d' style='display:none;margin-left: 30px;'>"%year)
+        if history.startDate().year == year:
+            startDate = history.startDate()
+        else:
+            startDate = datetime(year=year, month=1, day=1).date()
+        if year == datetime.today().date().year:
+            endDate = datetime.today().date()
+        else:
+            endDate = datetime(year=year+1, month=1, day=1).date()
+        outputfile.write(htmlOutput.portfolioDiff(startDate, endDate, history))
+        outputfile.write("</DIV>")
     
-    for holding in portfolio.holdings.values():
-        if holding.number != 0:
-            outputfile.write("<TR><TD>%d</TD><TD>%s</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD></TR>"%(\
-                holding.number,
-                holding.ticker,
-                holding.activeCost() / 100,
-                holding.currentValue() / 100,
-                holding.totalDividends() / 100, 
-                holding.activeProfit() / 100))
-    outputfile.write("</TABLE>\n")
-    outputfile.write("<BR>\n")
-    outputfile.write("<TABLE>\n")
-    outputfile.write("<TR><TD>Net invested</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.netInvested() / 100))
-    outputfile.write("<TR><TD>Current value</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.value() / 100))
-    outputfile.write("<TR><TD>Profit</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.totalProfit() / 100))
-    outputfile.write("</TABLE>\n")
-    outputfile.write("<BR>\n")
-            
 def actionTemplate(history, portfolio, investments, template):
     global chartIndex
     
@@ -501,7 +497,8 @@ def actionTemplate(history, portfolio, investments, template):
             "###SECTOR###"       : (writeSector, True, 300),
             "###CLASS###"        : (writeClass, True, 300),
             "###DATE###"         : (writeDate, False ,0),
-            "###PRIVATE###"      : (writePrivate, False, 0),
+            "###PRIV_SUMMARY###" : (writePrivateSummary, False, 0),
+            "###PRIV_COMPARE###" : (writePrivateCompare, False, 0),
             }
 
     fileStream = open(join(TEMPLATE_DIR,template), 'r')
