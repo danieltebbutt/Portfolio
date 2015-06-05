@@ -21,14 +21,14 @@ class htmlOutput:
     @staticmethod
     def portfolioSummary(portfolio):
         output = ""
-        output += "Portfolio summary (%s)<BR>\n"%datetime.datetime.today().date()
+        output += "<B>Summary</B> (%s)<BR>\n"%datetime.datetime.today().date()
         output += "<BR>\n"
         output += "<TABLE>\n"
         output += "<TR><TH>Number</TH><TH>Ticker</TH><TH>Cost</TH><TH>Value</TH><TH>Dividends</TH><TH>Profit</TH></TR>"
     
         for holding in portfolio.holdings.values():
             if holding.number != 0:
-                output += "<TR><TD>%s</TD><TD>%d</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD></TR>"%(\
+                output += "<TR><TD>%s</TD><TD>%d</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD class='num'>&pound;%.2f</TD></TR>"%(\
                     holding.ticker,
                     holding.number,
                     holding.activeCost() / 100,
@@ -40,7 +40,7 @@ class htmlOutput:
         output += "<TABLE>\n"
         output += "<TR><TD>Net invested</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.netInvested() / 100)
         output += "<TR><TD>Current value</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.value() / 100)
-        output += "<TR><TD>Profit</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.totalProfit() / 100)
+        output += "<TR><TD>Profit</TD><TD class='num'>&pound;%.2f</TD></TR>\n"%(portfolio.totalProfit() / 100)
         output += "</TABLE>\n"
         output += "<BR>\n"
         return output
@@ -56,10 +56,23 @@ class htmlOutput:
         print
         
     @staticmethod
-    def portfolioDiff(startDate, endDate, history):        
+    def portfolioDiff(startDate, endDate, history):     
+        output=""
+   
         startPortfolio = history.getPortfolio(startDate)
         endPortfolio = history.getPortfolio(endDate)
-        output = "<TABLE>\n"
+        # Print some other stuff
+       
+        totalProfit = (endPortfolio.totalProfit() - startPortfolio.totalProfit()) / 100
+        basisForReturn = history.basisForReturn(startDate, endDate) / 100
+        output += "<TABLE>\n"
+        output += "<TR class='returnCalc' style='display:none'><TD>Start value</TD><TD>&pound;%.2f</TD></TR>\n"%(startPortfolio.value() / 100)
+        output += "<TR class='returnCalc' style='display:none'><TD>End value</TD><TD>&pound;%.2f</TD></TR>\n"%(endPortfolio.value() / 100)
+        output += "<TR class='returnCalc' style='display:none'><TD>Basis for return</TD><TD>&pound;%.2f</TD></TR>\n"%(basisForReturn)
+        output += "<TR style='font-weight:bold' class='clickableUnderline' onClick='$(\".returnCalc\").toggle();'><TD>Return</TD><TD class='num'>%.2f%%</TD></TR>\n"%(100 * totalProfit / basisForReturn)
+        output += "</TABLE>\n"
+        output += "<BR>\n"
+        output += "<TABLE>\n"
         output += "<TR><TH>Ticker</TH><TH>Capital Gain</TH><TH>Dividends</TH><TH>Total</TH></TR>"
         # Print a line for each holding 
         for ticker, endHolding in endPortfolio.holdings.iteritems():
@@ -79,27 +92,19 @@ class htmlOutput:
                 startProfit = None
                 
             if startProfit != None:
-                output += "<TR><TD>%s</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD></TR>"%(
+                output += "<TR><TD>%s</TD><TD class='num'>&pound;%.2f</TD><TD class='num'>&pound;%.2f</TD><TD class='num'>&pound;%.2f</TD></TR>"%(
                       ticker,
                       (endHolding.capitalGain() - startCapitalGain) / 100,
                       (endHolding.totalDividends() - startTotalDividends) / 100,
                       (endHolding.profit() - startProfit) / 100)
-        output += "</TABLE>"
-
-        # Print some other stuff
-        output += "<TABLE>\n"       
-        output += "<TR><TD>Total capital</TD><TD>&pound;%.2f</TD></TR>\n"%((endPortfolio.capitalGain() - startPortfolio.capitalGain()) / 100)
-        output += "<TR><TD>Total earnings</TD><TD>&pound;%.2f</TD></TR>\n"%((endPortfolio.totalDividends() - startPortfolio.totalDividends()) / 100)
-        totalProfit = (endPortfolio.totalProfit() - startPortfolio.totalProfit()) / 100
-        output += "<TR><TD>Total profit</TD><TD>&pound;%.2f</TD></TR>\n"%(totalProfit)
-        output += "<TR></TR>\n"
-        output += "<TR><TD>Start value</TD><TD>&pound;%.2f</TD></TR>\n"%(startPortfolio.value() / 100)
-        output += "<TR><TD>End value</TD><TD>&pound;%.2f</TD></TR>\n"%(endPortfolio.value() / 100)
-        
-        basisForReturn = history.basisForReturn(startDate, endDate) / 100
-        output += "<TR><TD>Basis for return</TD><TD>&pound;%.2f</TD></TR>\n"%(basisForReturn)
-        output += "<TR><TD>Percentage return</TD><TD>%.2f%%</TD></TR>\n"%(100 * totalProfit / basisForReturn)
+        output += "<TR style='font-weight:bold'><B>\n"
+        output += "<TD>Total</TD>\n"
+        output += "<TD class='num'>&pound;%.2f</TD>\n"%((endPortfolio.capitalGain() - startPortfolio.capitalGain()) / 100)
+        output += "<TD class='num'>&pound;%.2f</TD>\n"%((endPortfolio.totalDividends() - startPortfolio.totalDividends()) / 100)
+        output += "<TD class='num'>&pound;%.2f</TD>\n"%(totalProfit)
+        output += "</TR>"
         output += "</TABLE>\n"
+
         return output
         
     @staticmethod

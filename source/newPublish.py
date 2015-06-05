@@ -470,21 +470,37 @@ def writePrivateSummary(outputfile, history, portfolio, investments):
     outputfile.write(htmlOutput.portfolioSummary(portfolio))
 
 def writePrivateCompare(outputfile, history, portfolio, investments):
-    outputfile.write("Annual performance<BR>\n")
-    for year in range(history.startDate().year, datetime.today().date().year + 1):
-        outputfile.write("<DIV onClick=\"$('#%d').toggle();\">%d<BR></DIV>\n"%(year,year))
-        outputfile.write("<DIV id='%d' style='display:none;margin-left: 30px;'>"%year)
+    outputfile.write("<DIV style='font-weight:bold'>Performance</DIV><BR>\n")
+    years = range(history.startDate().year, datetime.today().date().year + 1)
+    outputfile.write("<TABLE><TR>\n")
+    for year in years:
+        outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#%d').show();\">%d</DIV></TD>\n"%(year,year))
+    outputfile.write("</TR></TABLE><TABLE><TR>\n")
+    outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#90days').show();\">90 days</DIV></TD>\n")
+    outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#30days').show();\">30 days</DIV></TD>\n")
+    outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#7days').show();\">7 days</DIV></TD>\n")
+    outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#1days').show();\">Today</DIV></TD>\n")
+    outputfile.write("</TR></TABLE><BR>\n")
+    for year in years:
         if history.startDate().year == year:
             startDate = history.startDate()
         else:
             startDate = datetime(year=year, month=1, day=1).date()
         if year == datetime.today().date().year:
             endDate = datetime.today().date()
+            outputfile.write("<DIV id='%d' class='year' style='margin-left: 30px;'><B>%d</B><BR>"%(year, year))
         else:
             endDate = datetime(year=year+1, month=1, day=1).date()
+            outputfile.write("<DIV id='%d' class='year' style='display:none;margin-left: 30px;'><B>%d</B><BR>"%(year, year))
         outputfile.write(htmlOutput.portfolioDiff(startDate, endDate, history))
         outputfile.write("</DIV>")
-    
+
+    for day in (1,7,30,90):
+        startDate = (datetime.today() - timedelta(days = day)).date()
+        outputfile.write("<DIV id='%ddays' class='year' style='display:none;margin-left: 30px;'><B>%s</B><BR>"%(day, "Today" if (day == 1) else ("Last %d days"%day)))
+        outputfile.write(htmlOutput.portfolioDiff(startDate, datetime.today().date(), history))
+        outputfile.write("</DIV>")
+
 def actionTemplate(history, portfolio, investments, template):
     global chartIndex
     
