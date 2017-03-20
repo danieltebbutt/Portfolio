@@ -376,7 +376,7 @@ def shareInfo(ticker, startDateString = None, endDateString = None):
 
 def sync():
     dir, file = transaction.dirAndFile()
-    newPublish.upload(file, dir)
+    newPublish.upload(dir, file)
     
 #
 # Main code

@@ -52,7 +52,8 @@ class Price:
         if ticker.find("IS15") != -1 and price > 12000:
             price = 0
         if ticker.find("BRK-B") != -1:
-            price *= prices[("USD", priceDate)]
+            dayBefore = priceDate - datetime.timedelta(days = 1)
+            price *= prices[("USD", dayBefore)]
             if price > 10000 and priceDate < datetime.date(year=2010,month=2,day=1):
                 price /= 50
         return price

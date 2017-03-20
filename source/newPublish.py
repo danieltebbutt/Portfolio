@@ -23,6 +23,30 @@ MOUSEABLE = " onmouseover=\"this.style.background='lightgray'\" onmouseout=\"thi
 
 chartIndex = 1
 
+def upload(dir, file):
+
+    config = ConfigParser.ConfigParser()
+    config.readfp(open('portfolio.ini'))
+    type = config.get("newPublish", "type")
+    destination = config.get("newPublish", "destination")
+
+    if type == "FTP":
+        print "!! Needs work"
+    elif type == "AWS":
+        s3 = boto.connect_s3()
+        bucket = s3.get_bucket(destination)
+
+        k = Key(bucket)
+        print "Uploading:"
+
+        pathAndFile = join(dir, file)
+        fileStream = open(pathAndFile, 'rb')
+        k.key = file
+        print file
+        k.set_contents_from_file(fileStream)
+        fileStream.close()
+
+
 def uploadAll(local_dir = OUTPUT_DIR):
 
     config = ConfigParser.ConfigParser()
