@@ -6,6 +6,7 @@ import os
 import datetime
 import re
 import operator
+from forex_python.converter import CurrencyRates
 
 # REGULAR EXPRESSIONS
 
@@ -157,6 +158,19 @@ class Price:
                 currencyDate = datetime.date(int(rate[0]), int(rate[1]), int(rate[2]))
                 price = float(rate[3]) * 100
                 prices[(currency, currencyDate)] = price
+        c = CurrencyRates()
+        date_obj = startDate 
+        ticker = currency
+        if ticker == "Euro":
+            ticker = 'EUR'
+        while date_obj < datetime.date.today():
+            if not prices.has_key((ticker, date_obj)):
+                print "%s, %s, %s"%(ticker, 'GBP', date_obj)
+                try:
+                    prices[(currency, date_obj)] = c.get_rate(ticker, 'GBP', date_obj) * 100
+                except:
+                    print "failed"
+            date_obj += datetime.timedelta(days = 1)
 
     @staticmethod
     def loadHistoricalPricesFromWeb(ticker, startDate, endDate, prices, urlCache):

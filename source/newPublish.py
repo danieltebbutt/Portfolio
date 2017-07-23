@@ -497,8 +497,16 @@ def writePrivateCompare(outputfile, history, portfolio, investments):
     outputfile.write("<DIV style='font-weight:bold'>Performance</DIV><BR>\n")
     years = range(history.startDate().year, datetime.today().date().year + 1)
     outputfile.write("<TABLE><TR>\n")
+
+    per_line = len(years) / (((len(years) - 1) / 8) + 1)
+    split_in = per_line
     for year in years:
+        if split_in == 0:
+            split_in = per_line
+            outputfile.write("</TR><TR>")
         outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#%d').show();\">%d</DIV></TD>\n"%(year,year))
+        split_in -= 1
+
     outputfile.write("</TR></TABLE><TABLE><TR>\n")
     outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#90days').show();\">90 days</DIV></TD>\n")
     outputfile.write("<TD><DIV class='yearlink' onClick=\"$('.year').hide();$('#30days').show();\">30 days</DIV></TD>\n")
