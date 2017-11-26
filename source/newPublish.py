@@ -528,10 +528,13 @@ def writePrivateCompare(outputfile, history, portfolio, investments):
         outputfile.write("</DIV>")
 
     for day in (1,7,30,90):
-        startDate = (datetime.today() - timedelta(days = day)).date()
-        outputfile.write("<DIV id='%ddays' class='year' style='display:none;margin-left: 30px;'><B>%s</B><BR>"%(day, "Today" if (day == 1) else ("Last %d days"%day)))
-        outputfile.write(htmlOutput.portfolioDiff(startDate, datetime.today().date(), history))
-        outputfile.write("</DIV>")
+        try:
+            startDate = (datetime.today() - timedelta(days = day)).date()
+            outputfile.write("<DIV id='%ddays' class='year' style='display:none;margin-left: 30px;'><B>%s</B><BR>"%(day, "Today" if (day == 1) else ("Last %d days"%day)))
+            outputfile.write(htmlOutput.portfolioDiff(startDate, datetime.today().date(), history))
+            outputfile.write("</DIV>")
+        except:
+            print "Error comparing vs %d days ago"%day
 
 def actionTemplate(history, portfolio, investments, template):
     global chartIndex

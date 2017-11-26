@@ -11,8 +11,11 @@ from forex_python.converter import CurrencyRates
 # REGULAR EXPRESSIONS
 
 # A line from Yahoo (portfolio)
-YAHOODAY=re.compile('(?P<date>[\d-]+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>[\d.]+),'\
-                    '(?P<close>[\d.]+),(?P<volume>[\d.]+),(?P<adjclose>[\d.]+)')
+#YAHOODAY=re.compile('(?P<date>[\d-]+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>[\d.]+),'\
+#                    '(?P<close>[\d.]+),(?P<volume>[\d.]+),(?P<adjclose>[\d.]+)')
+
+YAHOODAY=re.compile('(?P<date>\d+-[A-Z][a-z][a-z]-\d+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>[\d.]+),'\
+                    '(?P<close>[\d.]+),(?P<volume>[\d.]+)')
 
 # A line from Yahoo (tracking)
 YAHOOSTOCK=re.compile('\"(?P<stock>[\w^.-]+)\",(?P<price>[\d.]+)[, +-/\d:PAM]*')
@@ -30,8 +33,9 @@ TEXTSAVE=re.compile('(?P<ticker>[\w^.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<d
 
 # PRICE SOURCES
 LATEST_PRICES_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"
-HISTORICAL_SHARE_PRICE_URL = "http://ichart.finance.yahoo.com/table.csv?s=%s&a=%d&b=%d&c=%d&d=%d&e=%d&f=%d&g=d&ignore=.csv"
-OLD_HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/convert/fxhistory?date_fmt=us&date=%d/%d/%d&date1=%d/%d/%d&exch=%s&expr=GBP&lang=en&margin_fixed=0&format=CSV&redirected=1"
+HISTORICAL_SHARE_PRICE_URL = "https://finance.google.com/finance/historical?q=%s&startdate=%d-%s-%d&enddate=%d-%s-%d&output=csv"
+#HISTORICAL_SHARE_PRICE_URL = "http://ichart.finance.yahoo.com/table.csv?s=%s&a=%d&b=%d&c=%d&d=%d&e=%d&f=%d&g=d&ignore=.csv"
+#OLD_HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/convert/fxhistory?date_fmt=us&date=%d/%d/%d&date1=%d/%d/%d&exch=%s&expr=GBP&lang=en&margin_fixed=0&format=CSV&redirected=1"
 HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/currency/historical-rates/download?quote_currency=%s&end_data=%d-%d-%d&start_date=%d-%d-%d&period=daily&data_range=c&display=absolute&rate=0&price=bid&view=table&base_currency_0=GBP&base_currency_1=&base_currency_2=&base_currency_3=&base_currency_4=&download=csv"
 
 OANDA_MAX_DAYS=28
@@ -80,6 +84,26 @@ class Price:
                 prices[(ticker, dates[ticker][0])] = prices[(ticker, dates[ticker][0] - datetime.timedelta(days = 1))]
             dates[ticker][0] = date
 
+    @staticmethod
+    def fixLastPrices(prices, currentTickers):
+        # Iterate through learning tickers and first and last dates
+        # Iterate through filling in gaps
+        tickers = []
+        dates = {}
+        for (ticker, date) in sorted(prices.keys(), key=operator.itemgetter(1)):
+            if not ticker in tickers:
+                tickers.append(ticker)
+                dates[ticker] = [date, date]
+            if date < dates[ticker][0]:
+                dates[ticker][0] = date
+            elif date > dates[ticker][1]:
+                dates[ticker][1] = date
+
+        for ticker in currentTickers:
+             while dates[ticker][1] < datetime.date.today():
+                 dates[ticker][1] += datetime.timedelta(days = 1)
+                 prices[(ticker, dates[ticker][1])] = prices[(ticker, dates[ticker][1] - datetime.timedelta(days = 1))] 
+
 # Methods for building URLs
     @staticmethod
     def currentPricesUrl(tickerList):
@@ -94,13 +118,21 @@ class Price:
     def historicalPricesUrl(ticker, startDate, lastDate, currency = False):
         urls = []
         if not currency:
+            #urls.append(HISTORICAL_SHARE_PRICE_URL%(
+            #            ticker,
+            #            startDate.month - 1,
+            #            startDate.day,
+            #            startDate.year,
+            #            lastDate.month - 1,
+            #            lastDate.day,
+            #            lastDate.year))
             urls.append(HISTORICAL_SHARE_PRICE_URL%(
                         ticker,
-                        startDate.month - 1,
                         startDate.day,
+                        startDate.strftime('%b'),
                         startDate.year,
-                        lastDate.month - 1,
                         lastDate.day,
+                        lastDate.strftime('%b'),
                         lastDate.year))
         else:
             while startDate < lastDate:
@@ -178,7 +210,9 @@ class Price:
         html = urlCache.read_url(url)
 
         for line in YAHOODAY.findall(html):
-            priceDate = datetime.datetime.strptime(line[0], "%Y-%m-%d").date()
+            print line
+#            priceDate = datetime.datetime.strptime(line[0], "%Y-%m-%d").date()
+            priceDate = datetime.datetime.strptime(line[0], "%d-%b-%y").date()
             closePrice = float(line[4])
             closePrice = Price.fixRawPrice(ticker, closePrice, priceDate, prices)
             if closePrice != 0:

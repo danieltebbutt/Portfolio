@@ -133,14 +133,17 @@ def createHistory(portfolioFile = None, forceReload = False):
     # Fill in any gaps
     Price.fixPriceGaps(prices)
 
+    # Now save any new data to disk
+    Price.savePricesToDisk(prices)
+
+    # And fill in any gaps between the last noted price and today
+    Price.fixLastPrices(prices, history.currentTickers())
+
     # Give the prices to our history
     history.notePrices(prices)
 
     # Done with all the HTML that we read
     urlCache.clean_urls()
-
-    # Now save any new data to disk
-    Price.savePricesToDisk(prices)
 
     return (history, investments)
 
