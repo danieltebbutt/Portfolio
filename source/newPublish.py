@@ -33,8 +33,8 @@ def upload(dir, file):
     if type == "FTP":
         print "!! Needs work"
     elif type == "AWS":
-        s3 = boto.connect_s3()
-        bucket = s3.get_bucket(destination)
+        s3 = boto.connect_s3(is_secure=False)
+        bucket = s3.get_bucket(destination, validate=False)
 
         k = Key(bucket)
         print "Uploading:"
@@ -68,8 +68,8 @@ def uploadAll(local_dir = OUTPUT_DIR):
 
         # !! Need to upload detail files as well
     elif type == "AWS":    
-        s3 = boto.connect_s3()
-        bucket = s3.get_bucket(destination)
+        s3 = boto.connect_s3(is_secure=False)
+        bucket = s3.get_bucket(destination, validate=False)
         
         k = Key(bucket)
         print "Uploading:"

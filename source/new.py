@@ -11,6 +11,7 @@ import sys
 import copy
 import os
 import traceback
+import json
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
@@ -43,9 +44,11 @@ TEMP_PORTFOLIO = os.path.normpath("./tempPortfolio.txt")
 def cacheUrls(tickerList, currencyList, investments, history, startDate, prices, forceReload = False):
     urls = []
     if history:
-        urls.append(Price.currentPricesUrl(history.currentTickers()))
+        for ticker in history.currentTickers():
+            urls.append(Price.currentPriceUrl(ticker))
     else:
-        urls.append(Price.currentPricesUrl(tickerList))
+        for ticker in tickerList:
+            urls.append(Price.currentPriceUrl(ticker))
 
     if not forceReload:
         lastDates = Price.lastDates(prices, currencyList + tickerList)
@@ -119,9 +122,9 @@ def createHistory(portfolioFile = None, forceReload = False):
     for currency in currencyInfo:
         Price.getCurrencyHistory(currency[0],
                                  currency[1],
+                                 date.today(),
                                  prices,
-                                 urlCache,
-                                 currency[2])
+                                 urlCache)
 
     # Load current prices from the Web
     Price.loadCurrentPricesFromWeb(history.currentTickers(), prices, urlCache)
@@ -143,7 +146,7 @@ def createHistory(portfolioFile = None, forceReload = False):
     history.notePrices(prices)
 
     # Done with all the HTML that we read
-    urlCache.clean_urls()
+    #urlCache.clean_urls()
 
     return (history, investments)
 
@@ -212,7 +215,7 @@ def compareShare(ticker):
     for tickerInfo in tickerInfoList:
         Price.loadHistoricalPricesFromWeb(tickerInfo[0], tickerInfo[1], tickerInfo[2], newPrices, urlCache)
     Price.fixPriceGaps(newPrices)
-    urlCache.clean_urls()
+    #urlCache.clean_urls()
 
     # Generate a new portfolio file with all tickers replaced with this one.
     newTransactions = []
