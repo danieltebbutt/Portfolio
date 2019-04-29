@@ -93,7 +93,7 @@ class Holding:
         
     def totalDividends(self):
         dividends = 0
-        for purchase in self.purchases:
+        for purchase in self.activePurchases():
             dividends += purchase.total_dividends()
         return dividends
         
