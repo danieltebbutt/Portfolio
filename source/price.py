@@ -8,6 +8,7 @@ import re
 import operator
 from forex_python.converter import CurrencyRates
 import json
+import sys, traceback
 
 # REGULAR EXPRESSIONS
 
@@ -162,12 +163,20 @@ class Price:
     @staticmethod
     def loadCurrentPricesFromWeb(tickerList, prices, urlCache):
         for ticker in tickerList:
+            if ticker == "NWBD.L":
+                continue
             url = Price.currentPriceUrl(ticker)
-            json_string = urlCache.read_url(url)
-            json_parsed = json.loads(json_string) 
-            price = float(json_parsed['Global Quote'][u'05. price'])
-            price = Price.fixRawPrice(ticker, price, datetime.date.today(), prices)
-            prices[(ticker, datetime.date.today())] = price
+            print url
+            try:
+                json_string = urlCache.read_url(url)
+                json_parsed = json.loads(json_string) 
+                price = float(json_parsed['Global Quote'][u'05. price'])
+                price = Price.fixRawPrice(ticker, price, datetime.date.today(), prices)
+                prices[(ticker, datetime.date.today())] = price
+            except Exception:
+                print "Error!"
+                traceback.print_exception(*sys.exc_info())
+
 
         return prices
 
@@ -178,13 +187,19 @@ class Price:
             ticker = 'EUR'
 
         url = Price.historicalPricesUrl(currency, startDate, endDate, True)[-1]
- 
-        json_string = urlCache.read_url(url)
-        json_parsed = json.loads(json_string)
-        for day, data in json_parsed['Time Series FX (Daily)'].iteritems():
-            currencyDate = datetime.datetime.strptime(day, "%Y-%m-%d").date()
-            price = float(data['4. close']) * 100
-            prices[(currency, currencyDate)] = price
+
+        try: 
+      	    json_string = urlCache.read_url(url)
+            json_parsed = json.loads(json_string)
+            for day, data in json_parsed['Time Series FX (Daily)'].iteritems():
+                 currencyDate = datetime.datetime.strptime(day, "%Y-%m-%d").date()
+                 price = float(data['4. close']) * 100
+                 prices[(currency, currencyDate)] = price
+        except Exception:
+            print "Error!"
+            traceback.print_exception(*sys.exc_info())
+
+            
 
     @staticmethod
     def loadHistoricalPricesFromWeb(ticker, startDate, endDate, prices, urlCache):
