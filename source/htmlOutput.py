@@ -20,26 +20,30 @@ class htmlOutput:
 
     @staticmethod
     def portfolioSummary(portfolio):
+        totalCapitalGain=0.0
         output = ""
         output += "<B>Summary</B> (%s)<BR>\n"%datetime.datetime.today().date()
         output += "<BR>\n"
         output += "<TABLE>\n"
-        output += "<TR><TH>Number</TH><TH>Ticker</TH><TH>Cost</TH><TH>Value</TH><TH>Dividends</TH><TH>Profit</TH></TR>"
+        output += "<TR><TH>Number</TH><TH>Ticker</TH><TH>Cost</TH><TH>Value</TH><TH>Dividends</TH><TH>Capital Gain</TH><TH>Profit</TH></TR>"
     
         for holding in portfolio.holdings.values():
             if holding.number != 0:
-                output += "<TR><TD>%s</TD><TD>%d</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD class='num'>&pound;%.2f</TD></TR>"%(\
+                output += "<TR><TD>%s</TD><TD>%d</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD>&pound;%.2f</TD><TD class='num'>&pound;%.2f</TD></TR>"%(\
                     holding.ticker,
                     holding.number,
                     holding.activeCost() / 100,
                     holding.currentValue() / 100,
                     holding.totalDividends() / 100, 
+                    (holding.currentValue() - holding.activeCost()) / 100,
                     holding.activeProfit() / 100)
+                totalCapitalGain += (holding.currentValue() - holding.activeCost())
         output += "</TABLE>\n"
         output += "<BR>\n"
         output += "<TABLE>\n"
         output += "<TR><TD>Net invested</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.netInvested() / 100)
         output += "<TR><TD>Current value</TD><TD>&pound;%.2f</TD></TR>\n"%(portfolio.value() / 100)
+        output += "<TR><TD>Unrealised capital gain</TD><TD>&pound;%.2f</TD></TR>\n"%(totalCapitalGain / 100)
         output += "<TR><TD>Profit</TD><TD class='num'>&pound;%.2f</TD></TR>\n"%(portfolio.totalProfit() / 100)
         output += "</TABLE>\n"
         output += "<BR>\n"
