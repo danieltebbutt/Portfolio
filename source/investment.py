@@ -16,9 +16,14 @@ filename = os.path.normpath("./data/stocks.csv")
 class investment:
 
     @staticmethod
-    def learn_investments(transactions):
+    def learn_investments(transactions, inputStream = None):
         investments = {}
-        for line in open(filename):
+
+        if not inputStream:
+            inputStream = open(filename)
+
+        for line_bytes in inputStream:
+            line = line_bytes.decode("utf-8")
             parsedline = STOCK.match(line)
             if parsedline != None:
                 stock=parsedline.group('stock')
@@ -33,7 +38,7 @@ class investment:
                 for transaction in transactions:
                     if transaction.date < earliest_date:
                         earliest_date = transaction.date
-                    if not investments.has_key(transaction.stock) and (transaction.stock == stock):
+                    if transaction.stock not in investments and (transaction.stock == stock):
                         investments[transaction.stock] = investment(stock,
                                                                     sector,
                                                                     assetclass,
@@ -45,7 +50,7 @@ class investment:
                                                                     name)
                 
                 # Some currencies are tracked even if we never record any buys or sells               
-                if not investments.has_key(stock) and assetclass == "Currency":
+                if stock not in investments and assetclass == "Currency":
                     investments[stock] = investment(stock,
                                                     sector,
                                                     assetclass,
@@ -57,8 +62,8 @@ class investment:
                                                     name)
         # Check everything is listed in stocks.csv
         for transaction in transactions:
-            if not investments.has_key(transaction.stock):
-                print "Investment not found in stocks.csv, or line malformed: %s"%transaction.stock
+            if transaction.stock not in investments:
+                print("Investment not found in stocks.csv, or line malformed: %s"%transaction.stock)
                 exit(-1)
         return investments
 
@@ -120,4 +125,4 @@ class investment:
         return desc
 
     def print_diags(self):
-        print self.history_url(datetime.date(year=2008,month=1,day=1), datetime.date(year=2010,month=1,day=1))
+        print(self.history_url(datetime.date(year=2008,month=1,day=1), datetime.date(year=2010,month=1,day=1)))

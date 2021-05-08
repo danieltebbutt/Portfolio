@@ -16,15 +16,15 @@ from datetime import datetime
 from datetime import date
 from datetime import timedelta
 
-from screenOutput import screenOutput
-from price import Price
-from transaction import transaction
-from history import History
-from investment import investment
+from .screenOutput import screenOutput
+from .price import Price
+from .transaction import transaction
+from .history import History
+from .investment import investment
+from .urlcache import urlcache
+from .amazonPublisher import amazonPublisher
+from .yfPriceLoader import yfPriceLoader
 
-from urlcache import urlcache
-
-import newPublish
 
 # Hack to workaround Python SSL bug
 import ssl
@@ -40,70 +40,19 @@ ssl.wrap_socket = sslwrap(ssl.wrap_socket)
 
 TEMP_PORTFOLIO = os.path.normpath("./tempPortfolio.txt")
 
-# Cache all URLs that we are going to load from later
-def cacheUrls(tickerList, currencyList, investments, history, startDate, prices, forceReload = False):
-    urls = []
-    if history:
-        for ticker in history.currentTickers():
-            urls.append(Price.currentPriceUrl(ticker))
-    else:
-        for ticker in tickerList:
-            urls.append(Price.currentPriceUrl(ticker))
-
-    if not forceReload:
-        lastDates = Price.lastDates(prices, currencyList + tickerList)
-    else:
-        lastDates = {}
-        
-    for ticker in currencyList + tickerList:
-        if ticker not in lastDates:
-            lastDates[ticker] = startDate
-
-    currencyInfo = []
-    tickerInfo = []
-
-    for currency in currencyList:
-        if date.today() > lastDates[currency]:
-            url = Price.historicalPricesUrl(currency,
-                                            lastDates[currency],
-                                            date.today(),
-                                            currency = True)
-            urls.extend(url)
-            currencyInfo.append((currency, lastDates[currency], url))
-
-    for ticker in tickerList:
-        if history:
-            lastHeld = history.lastHeld(ticker)
-            firstHeld = history.firstHeld(ticker)
-        else:
-            lastHeld = date.today()
-            firstHeld = startDate
-            
-        if lastHeld - timedelta(days = 1) > lastDates[ticker]:
-            url = Price.historicalPricesUrl(ticker,
-                                            max(lastDates[ticker], firstHeld),
-                                            lastHeld,
-                                            currency = False)
-            urls.extend(url)
-            tickerInfo.append((ticker, max(lastDates[ticker], firstHeld), lastHeld, url))
-
-    urlCache = urlcache(urls)
-    urlCache.cache_urls()
-    return urlCache, currencyInfo, tickerInfo
-
-def createHistory(portfolioFile = None, forceReload = False):
+def createHistory(portfolioFile = None, 
+                  forceReload = False,
+                  portfolio_stream = None,
+                  price_stream = None,
+                  stock_stream = None,
+                  update_data = True,
+                  price_out_stream = None):
     # Read all transactions from disk
-    transactions = transaction.readTransactions(portfolioFile)
+    transactions = transaction.readTransactions(inputFile = portfolioFile, inputStream = portfolio_stream)
     startDate = transactions[0].date
 
     # And all investments
-    investments = investment.learn_investments(transactions)
-
-    # Build a list of all mentioned tickers
-    tickerList = []
-    for trans in transactions:
-        if trans.ticker not in tickerList:
-            tickerList.append(trans.ticker)
+    investments = investment.learn_investments(transactions, inputStream = stock_stream)
 
     # Hard code currency list.  !! Should pick these out of investments really.
     currencyList = ["USD", "Euro", "NOK"]
@@ -113,76 +62,60 @@ def createHistory(portfolioFile = None, forceReload = False):
 
     # Load what we've got from disk
     prices = {}
-    Price.loadHistoricalPricesFromDisk(prices)
+    Price.loadHistoricalPricesFromDisk(prices, inputStream = price_stream)
 
-    # Start reading all the HTML we're going to need now.
-    urlCache, currencyInfo, tickerInfo = cacheUrls(tickerList, currencyList, investments, history, startDate, prices, forceReload)
+    if update_data:
+        tickerList = history.currentTickers()
+        loader = yfPriceLoader(tickerList, currencyList)
+        loader.getCurrentPrices(prices)
 
-    # Load currency histories
-    for currency in currencyInfo:
-        Price.getCurrencyHistory(currency[0],
-                                 currency[1],
-                                 date.today(),
-                                 prices,
-                                 urlCache)
+        # Fill in any gaps
+        Price.fixPriceGaps(prices)
 
-    # Load current prices from the Web
-    Price.loadCurrentPricesFromWeb(history.currentTickers(), prices, urlCache)
+        # Now save any new data to disk
+        Price.savePricesToDisk(prices, outStream = price_out_stream)
 
-    # Now load historical prices from the Web
-    for ticker in tickerInfo:
-        Price.loadHistoricalPricesFromWeb(ticker[0], ticker[1], ticker[2], prices, urlCache)
-
-    # Fill in any gaps
-    Price.fixPriceGaps(prices)
-
-    # Now save any new data to disk
-    Price.savePricesToDisk(prices)
-
-    # And fill in any gaps between the last noted price and today
+    # Fill in any gaps between the last noted price and today
     Price.fixLastPrices(prices, history.currentTickers())
 
     # Give the prices to our history
     history.notePrices(prices)
-
-    # Done with all the HTML that we read
-    #urlCache.clean_urls()
 
     return (history, investments)
 
 def interactive():
     while True:
         try:
-            cmd = raw_input("> ")
+            cmd = input("> ")
             runCommand(cmd)
         except Exception:
-            print "Error!"
+            print("Error!")
             traceback.print_exception(*sys.exc_info())
 
 def help(arg = None):
-    print "All dates use YYYY-MM-DD format"
+    print("All dates use YYYY-MM-DD format")
     if arg:
-        print "%s"%arg
+        print("%s"%arg)
         if not isinstance(commands[arg], tuple):
-            print "Self-explanatory"
+            print("Self-explanatory")
         else:
-            print "%s"%commands[arg][1]
+            print("%s"%commands[arg][1])
             if len(commands[arg]) > 2:
-                print "%s %s"%(arg, commands[arg][2])
+                print("%s %s"%(arg, commands[arg][2]))
     else:
-        print "Available commands:"
-        for key, command in commands.iteritems():
+        print("Available commands:")
+        for key, command in commands.items():
             if isinstance(command, tuple):
-                print "%-14s%s"%(key, command[1])
+                print("%-14s%s"%(key, command[1]))
             else:
-                print "%-14s"%(key)
+                print("%-14s"%(key))
 
 def compareDates(startDateString, endDateString = ""):
     # Parse dates
     try:
         startDate = datetime.strptime(startDateString, "%Y-%m-%d").date()
     except:
-        print "Unable to parse %s as YYYY-mm-dd"%startDateString
+        print("Unable to parse %s as YYYY-mm-dd"%startDateString)
         return
     try:
         if endDateString:
@@ -190,12 +123,12 @@ def compareDates(startDateString, endDateString = ""):
         else:
             endDate = date.today()
     except:
-        print "Unable to parse %s as YYYY-MM-DD"%endDateString
+        print("Unable to parse %s as YYYY-MM-DD"%endDateString)
         return
 
     # Validate input
     if endDate <= startDate:
-        print "End date must be later than start date"
+        print("End date must be later than start date")
         return
     elif endDate > date.today():
         endDate = date.today()
@@ -230,16 +163,16 @@ def compareShare(ticker):
     transaction.writeTransactions(newTransactions, TEMP_PORTFOLIO)
 
     # Now build an alternate history based on these new transactions
-    print "Building portfolio history..."
+    print("Building portfolio history...")
     newHistory, newInvestments = createHistory(TEMP_PORTFOLIO, forceReload = True)
-    print "Done"
-    print ""
+    print("Done")
+    print("")
     newPortfolio = newHistory.getPortfolio(date.today())
 
     # And print some info
-    print u"Hypothetical / real capital gain:   \N{pound sign}%.2f / \N{pound sign}%.2f"%(newPortfolio.capitalGain() / 100, portfolio.capitalGain() / 100)
-    print u"Real portfolio dividends received:  \N{pound sign}%.2f"%(portfolio.totalDividends() / 100)
-    print "Real portfolio yield:                %.2f%%"%(((portfolio.totalDividends() * 365.0 / (history.endDate() - history.startDate()).days)) * 100 / history.averageValue(history.startDate(), history.endDate()))
+    print("Hypothetical / real capital gain:   \N{pound sign}%.2f / \N{pound sign}%.2f"%(newPortfolio.capitalGain() / 100, portfolio.capitalGain() / 100))
+    print("Real portfolio dividends received:  \N{pound sign}%.2f"%(portfolio.totalDividends() / 100))
+    print("Real portfolio yield:                %.2f%%"%(((portfolio.totalDividends() * 365.0 / (history.endDate() - history.startDate()).days)) * 100 / history.averageValue(history.startDate(), history.endDate())))
 
 def runCommand(command):
     # Handle redirection of stdout to file
@@ -259,16 +192,16 @@ def runCommand(command):
             fun = fun[0]
         fun(*substrings[1:])
     else:
-        print "Command unrecognized"
+        print("Command unrecognized")
 
     # And restore stdout, if required
     if file:
         sys.stdout.close()
         sys.stdout = oldStdout
-        print "Output to %s:"%file
+        print("Output to %s:"%file)
         readfile = open(file, "r")
         for line in readfile:
-            print line,
+            print(line, end=' ')
         readfile.close()
 
 def summary():
@@ -284,7 +217,8 @@ def capitalGain():
     screenOutput.capitalGain(portfolio)
 
 def publish():
-    newPublish.mainPage(history, portfolio, investments)
+    awsPublisher = amazonPublisher(history, portfolio, investments)
+    awsPublisher.mainPage()
 
 def tax(year):
     screenOutput.tax(history, investments, int(year))
@@ -305,10 +239,10 @@ def reload():
     global investments
 
     # Create the complete portfolio history
-    print "Building portfolio history..."
+    print("Building portfolio history...")
     history, investments = createHistory()
-    print "Done"
-    print ""
+    print("Done")
+    print("")
 
     # Get today's portfolio
     portfolio = history.getPortfolio(date.today())
@@ -319,7 +253,7 @@ def dividend(ticker, textExdivDate, textDivDate, textPerShareAmount):
         exdivDate = datetime.strptime(textExdivDate, "%Y-%m-%d").date()
         divDate = datetime.strptime(textDivDate, "%Y-%m-%d").date()
     except:
-        print "Unable to parse %s or %s as %Y-%m-%d"%(textExdivDate, textDivDate)
+        print("Unable to parse %s or %s as %Y-%m-%d"%(textExdivDate, textDivDate))
         return
 
     perShareAmount = float(textPerShareAmount)
@@ -337,7 +271,7 @@ def sell(ticker, textSaleDate, textNumber, textPerShareAmount, textCommission):
     try:
         saleDate = datetime.strptime(textSaleDate, "%Y-%m-%d").date()
     except:
-        print "Unable to parse %s as YYYY-MM-DD"%textSaleDate
+        print("Unable to parse %s as YYYY-MM-DD"%textSaleDate)
         return
 
     perShareAmount = float(textPerShareAmount)
@@ -353,7 +287,7 @@ def buy(ticker, textBuyDate, textNumber, textPerShareAmount, textCommission):
     try:
         buyDate = datetime.strptime(textBuyDate, "%Y-%m-%d").date()
     except:
-        print "Unable to parse %s as %Y-%m-%d"%textBuyDate
+        print("Unable to parse %s as %Y-%m-%d"%textBuyDate)
         return
 
     perShareAmount = float(textPerShareAmount)
@@ -383,45 +317,46 @@ def shareInfo(ticker, startDateString = None, endDateString = None):
 def sync():
     dir, file = transaction.dirAndFile()
     newPublish.upload(dir, file)
-    
-#
-# Main code
-#
-commands = {
-    # General
-    "interactive"  : (interactive),
-    "exit"         : (sys.exit),
-    "help"         : (help),
-    "debug"        : (debug, "Enter PDB debugger"),
-    "reload"       : (reload, "Refresh all data"),
-    "eval"         : (eval, "Run a python command", "<args>"),
 
-    # Print to screen
-    "summary"      : (summary, "Current portfolio"),
-    "purchases"    : (purchases, "Ranked list of purchases"),
-    "income"       : (income, "All dividends received"),
-    "comparedates" : (compareDates, "Compare two dates", "<earlier date> <later date>"),
-    "compare"      : (compareDates, "=compareDates"),
-    "compareshare" : (compareShare, "Compare portfolio with share or index", "<ticker>"),
-    "capital"      : (capitalGain, "Capital gain/loss summary"),
-    "tax"          : (tax, "Tax details for a given year", "<year>"),
-    "print"        : (summary, "=summary"),
-    "yield"        : (portfolioYield, "Current portfolio estimated forward yield"),
-    "transactions" : (transactions, "List of all transactions"),
-    "shareinfo"    : (shareInfo, "Info on a particular share", "<ticker> [startDate] [endDate]"),
+if __name__ == "__main__":
+    #
+    # Main code
+    #
+    commands = {
+        # General
+        "interactive"  : (interactive),
+        "exit"         : (sys.exit),
+        "help"         : (help),
+        "debug"        : (debug, "Enter PDB debugger"),
+        "reload"       : (reload, "Refresh all data"),
+        "eval"         : (eval, "Run a python command", "<args>"),
 
-    # Publish/write
-    "publish"      : (publish, "Publish to web"),
-    "tidy"         : (tidy, "Tidy local price database"),
-    "dividend"     : (dividend, "Record dividend transaction", "<ticker> <Ex-div-date> <Div-date> <Per-share-amount>"),
-    "sell"         : (sell, "Record sell transaction", "<ticker> <Sale-date> <Number> <Price> <Commission>"),
-    "buy"          : (buy, "Record buy transaction", "<ticker> <Buy-date> <Number> <Price> <Commission>"),
-    "sync"         : (sync, "Sync portfolio to web"),
+        # Print to screen
+        "summary"      : (summary, "Current portfolio"),
+        "purchases"    : (purchases, "Ranked list of purchases"),
+        "income"       : (income, "All dividends received"),
+        "comparedates" : (compareDates, "Compare two dates", "<earlier date> <later date>"),
+        "compare"      : (compareDates, "=compareDates"),
+        "compareshare" : (compareShare, "Compare portfolio with share or index", "<ticker>"),
+        "capital"      : (capitalGain, "Capital gain/loss summary"),
+        "tax"          : (tax, "Tax details for a given year", "<year>"),
+        "print"        : (summary, "=summary"),
+        "yield"        : (portfolioYield, "Current portfolio estimated forward yield"),
+        "transactions" : (transactions, "List of all transactions"),
+        "shareinfo"    : (shareInfo, "Info on a particular share", "<ticker> [startDate] [endDate]"),
 
-}
+        # Publish/write
+        "publish"      : (publish, "Publish to web"),
+        "tidy"         : (tidy, "Tidy local price database"),
+        "dividend"     : (dividend, "Record dividend transaction", "<ticker> <Ex-div-date> <Div-date> <Per-share-amount>"),
+        "sell"         : (sell, "Record sell transaction", "<ticker> <Sale-date> <Number> <Price> <Commission>"),
+        "buy"          : (buy, "Record buy transaction", "<ticker> <Buy-date> <Number> <Price> <Commission>"),
+        "sync"         : (sync, "Sync portfolio to web"),
 
-reload()
+    }
 
-# Parse command line args
-for command in sys.argv[1:]:
-    runCommand(command)
+    reload()
+
+    # Parse command line args
+    for command in sys.argv[1:]:
+        runCommand(command)

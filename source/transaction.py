@@ -7,30 +7,36 @@ import os
 import re
 import datetime
 
-TRANSACTION = re.compile('(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
-                         '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
-
-ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
-
-PORTFOLIO_DIR = os.path.normpath("./data")
-PORTFOLIO_NAME = "portfolio.txt"
-portfolio = os.path.normpath("%s/%s"%(PORTFOLIO_DIR, PORTFOLIO_NAME))
-
-dollar_sign=u'\N{dollar sign}'
-pound_sign=u'\N{pound sign}'
-
 class transaction:
 
+    TRANSACTION = re.compile('(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
+                            '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
+
+    ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
+
+    PORTFOLIO_DIR = os.path.normpath("./data")
+    PORTFOLIO_NAME = "portfolio.txt"
+    portfolio = os.path.normpath("%s/%s"%(PORTFOLIO_DIR, PORTFOLIO_NAME))
+
+    dollar_sign='\N{dollar sign}'
+    pound_sign='\N{pound sign}'
+
     @staticmethod
-    def readTransactions(inputFile = None):
-        if inputFile:
-            portfolioFile = inputFile
-        else:
-            portfolioFile = portfolio
+    def readTransactions(inputFile = None, inputStream = None):
+
+        if not inputStream:
+            if inputFile:
+                portfolioFile = inputFile
+            else:
+                portfolioFile = portfolio
+
+            print(portfolioFile)
+            inputStream = open(portfolioFile)
 
         transactions = []
-        print portfolioFile
-        for line in open(portfolioFile):
+
+        for line_bytes in inputStream:
+            line = line_bytes.decode("utf-8")
             if transaction.valid(line):
                 tran = transaction(line)
                 if tran.date <= datetime.date.today():
@@ -81,7 +87,7 @@ class transaction:
     # Create a transaction.
     #
     def __init__(self, line):
-        parsedline = TRANSACTION.match(line)
+        parsedline = transaction.TRANSACTION.match(line)
         if parsedline == None:
             # Not valid!
             raise Exception('Transaction not valid!')
@@ -102,11 +108,11 @@ class transaction:
         self.price=float(parsedline.group('price'))
         self.comm=float(parsedline.group('comm'))
 
-        assert(self.action in ACTIONS)
+        assert(self.action in transaction.ACTIONS)
 
     @staticmethod
     def valid(line):
-        return(TRANSACTION.match(line) != None)
+        return(transaction.TRANSACTION.match(line) != None)
 
     def tradeValue(self):
         if (self.action == "BUY" or self.action == "SELL") and self.stock != "USD":

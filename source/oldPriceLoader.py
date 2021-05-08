@@ -1,5 +1,5 @@
 #
-# Price for a particular stock
+# Loads prices
 #
 
 import os
@@ -9,6 +9,10 @@ import operator
 from forex_python.converter import CurrencyRates
 import json
 import sys, traceback
+
+from .priceLoader import priceLoader
+from .price import Price
+from .urlCache import urlCache
 
 # REGULAR EXPRESSIONS
 
@@ -42,9 +46,6 @@ HISTORICAL_CURRENCY_PRICE_URL = "http://www.oanda.com/currency/historical-rates/
 
 OANDA_MAX_DAYS=28
 
-# MODIFICATIONS
-ROK_BANKRUPT=datetime.date(year=2010,month=11,day=8)
-CPT_REDENOMINATED=datetime.date(year=2009,month=7,day=28)
 
 ALPHA_HISTORICAL_URL = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&apikey=%s"
 
@@ -52,7 +53,40 @@ ALPHA_CURRENT_URL = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&sym
 
 ALPHA_FX_URL = "https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=%s&to_symbol=GBP&apikey=%s"
 
-class Price:
+class oldPriceLoader(priceLoader):
+
+    def getCurrentPrices(self, prices):
+        urlCache, currencyInfo = self.cacheUrls()
+        # !!
+        pass
+
+    # Cache all URLs that we are going to load from later
+    def cacheUrls(self):
+        urls = []
+        for ticker in self.tickerList:
+            urls.append(Price.currentPriceUrl(ticker))
+
+        lastDates = Price.lastDates(prices, self.currencyList + self.tickerList)
+            
+        for ticker in self.currencyList + self.tickerList:
+            if ticker not in lastDates:
+                lastDates[ticker] = startDate
+
+        currencyInfo = []
+
+        for currency in self.currencyList:
+            if date.today() > lastDates[currency]:
+                url = Price.historicalPricesUrl(currency,
+                                                lastDates[currency],
+                                                date.today(),
+                                                currency = True)
+                urls.extend(url)
+                currencyInfo.append((currency, lastDates[currency], url))
+
+        urlCache = urlcache(urls)
+        urlCache.cache_urls()
+        return urlCache, currencyInfo, tickerInfo
+
     # Methods for fixing problems with the data
     @staticmethod
     def fixRawPrice(ticker, price, priceDate, prices):
@@ -264,9 +298,4 @@ class Price:
         with open(LOCAL_PRICES, 'w') as file:
             Price.writePrices(file, prices, sorted(prices))
 
-    # Create a price
-    def __init__(self, name, date, price):
-        self.name = name
-        self.date = date
-        self.price = price
 

@@ -1,7 +1,7 @@
 # A holding is an individual shareholding
 
-from transaction import transaction
-from purchase import purchase
+from .transaction import transaction
+from .purchase import purchase
 import math
 
 class Holding:
@@ -61,7 +61,7 @@ class Holding:
         return list(set(self.purchases) - set(self.activePurchases()))
     
     def toString(self):        
-        return u"%8d %6s, net cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
+        return "%8d %6s, net cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
                self.number, 
                self.ticker, 
                (0 - self.cash) / 100, 
@@ -84,7 +84,7 @@ class Holding:
         return self.currentValue() + self.cash
     
     def toStringActive(self):
-        return u"%8d %6s, cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
+        return "%8d %6s, cost \N{pound sign}%8.2f, value = \N{pound sign}%8.2f, profit = \N{pound sign}%8.2f"%(\
                self.number, 
                self.ticker, 
                self.activeCost() / 100, 

@@ -18,9 +18,9 @@ class get_url (threading.Thread):
     def get_share_price_history(self, stocks):
         for stock, url in stocks:
             if self.verbose:
-                print "Getting info for %s..."%(stock)
+                print("Getting info for %s..."%(stock))
             try:
-                response = urllib2.urlopen(url)
+                response = urllib.request.urlopen(url)
                 html = response.read()
                 for daysdata in YAHOODAY.findall(html):
                     date=daysdata[0]
@@ -31,7 +31,7 @@ class get_url (threading.Thread):
                     self.lock.acquire()
                     self.porty.history[stockdate].note_price(stock, closeprice)
                     self.lock.release()
-            except Exception, err:
-                print "Failed to open %s %s"%(url, str(err))
+            except Exception as err:
+                print("Failed to open %s %s"%(url, err))
             if self.verbose:
-                print "Info complete for %s..."%stock
+                print("Info complete for %s..."%stock)

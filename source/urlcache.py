@@ -1,5 +1,5 @@
 import threading
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import os
 import time
 import hashlib
@@ -15,14 +15,14 @@ class get_url (threading.Thread):
 
     def run(self):
         try:
-            response = urllib2.urlopen(self.url)
-            html = response.read()
+            response = urllib.request.urlopen(self.url)
+            html = response.read().decode("utf-8")
             if "Invalid API call" in html:
                 time.sleep(60)
-                response = urllib2.urlopen(self.url)
+                response = urllib.request.urlopen(self.url)
                 html = response.read()
-        except Exception, err:
-            print "Failed to open %s: %s"%(self.url, str(err))
+        except Exception as err:
+            print("Failed to open %s: %s"%(self.url, str(err)))
             html = ""
         outputfile = open(self.target, 'w') 
         outputfile.write(html)
@@ -46,7 +46,7 @@ class urlcache:
         indexfile = open("./cache/index.txt","w")
         for url in self.urls:
             num_urls = num_urls + 1
-            str = "./cache/%s"%hashlib.sha224(url).hexdigest()
+            str = "./cache/%s"%hashlib.sha224(url.encode("utf-8")).hexdigest()
             self.urlfile[url] = str
             get_url(url, self.urlfile[url], self, lock).start()
             indexfile.write("%s: %s\n"%(url, str))
