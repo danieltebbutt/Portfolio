@@ -44,10 +44,9 @@ class transaction:
         return sorted(transactions, key=lambda x: x.date)
 
     @staticmethod
-    def writeTransactions(transactionList, inputFile):
-        with open(inputFile, 'w') as file:
-            pass
-        os.remove(inputFile)
+    def writeTransactions(transactionList, outputFile = None, outputStream = None):
+        if not outputStream:
+            outputStream = open(outputFile, 'w')
         for tran in transactionList:
             transaction.writeTransaction(tran.ticker,
                                          tran.date,
@@ -55,29 +54,29 @@ class transaction:
                                          tran.action,
                                          tran.price,
                                          tran.comm,
-                                         inputFile = inputFile)
+                                         outputStream = outputStream)
 
     @staticmethod
-    def writeTransaction(ticker, date, number, type, amount, commission, comment = "", inputFile = ""):
-        if inputFile:
-            portfolioFile = inputFile
-        else:
-            portfolioFile = portfolio
+    def writeTransaction(ticker, date, number, type, amount, commission, comment = "", outputFile = "", outputStream = None):
+        if not outputStream:
+            if outputFile:
+                portfolioFile = outputFile
+            else:
+                portfolioFile = portfolio
+            outputStream = open(portfolioFile, 'a')
 
-        with open(portfolioFile, 'a') as file:
-            if comment:
-                file.write("# %s"%comment)
-            file.write("%-7s %-7d %-7d %-7d %-11f %-11s %-11f %-11f\n"%(
-                       ticker,
-                       date.day,
-                       date.month,
-                       date.year,
-                       number,
-                       type,
-                       amount,
-                       commission,
-                       ))
-        pass
+        if comment:
+            outputStream.write("# %s"%comment)
+        outputStream.write("%-7s %-7d %-7d %-7d %-11f %-11s %-11f %-11f\n"%(
+                ticker,
+                date.day,
+                date.month,
+                date.year,
+                number,
+                type,
+                amount,
+                commission,
+                ))
 
     @staticmethod
     def dirAndFile():
@@ -133,12 +132,12 @@ class transaction:
         if self.action == "INT":
             return "%s %6s paid interest  of %s%-4.2f"%(self.date.strftime("%d/%m/%y"),
                                                               self.stock,
-                                                              pound_sign,
+                                                              self.pound_sign,
                                                               (self.number * self.price) / 100)
         elif self.action == "EXDIV":
             return "%s %6s paid dividends of %s%-4.2f"%(self.date.strftime("%d/%m/%y"),
                                                               self.stock,
-                                                              pound_sign,
+                                                              self.pound_sign,
                                                               (self.number * self.price) / 100)
 
     # !!

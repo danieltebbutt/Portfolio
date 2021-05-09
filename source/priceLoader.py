@@ -40,8 +40,3 @@ class priceLoader(object):
     @abstractmethod
     def getCurrentPrices(self):
         pass
-
-
-
-
-

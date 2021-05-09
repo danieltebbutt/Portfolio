@@ -126,7 +126,7 @@ class History:
     def price(self, ticker, date):
         return self.prices[(ticker, date)]
 
-    def getTransactions(self, startDate, endDate = None, ticker = None, actions = transaction.ACTIONS):
+    def getTransactions(self, startDate = None, endDate = None, ticker = None, actions = transaction.ACTIONS):
         if not startDate:
             startDate = self.startDate()
         if not endDate:
