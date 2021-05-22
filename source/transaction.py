@@ -39,8 +39,8 @@ class transaction:
             line = line_bytes.decode("utf-8")
             if transaction.valid(line):
                 tran = transaction(line)
-                if tran.date <= datetime.date.today():
-                    transactions.append(tran)
+                #if tran.date <= datetime.date.today():
+                transactions.append(tran)
         return sorted(transactions, key=lambda x: x.date)
 
     @staticmethod

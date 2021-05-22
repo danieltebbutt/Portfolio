@@ -37,11 +37,10 @@ class yfPriceLoader(priceLoader):
 
     def getCurrentPrices(self, prices):
         allTickers = [ self.tickerMap[x] if x in self.tickerMap else x for x in self.currencyTickerList + self.stockTickerList ]
-        data = yf.download(allTickers, period='1d')
+        data = yf.download(allTickers, period='5d')
         for ticker in allTickers:
             try:
-                info = data['Close', ticker]
-                price = float(info)
+                price = float(data.apply(lambda x: x[x.notnull()].values[-1])['Close'][ticker])
                 price = self.fixRawPrice(ticker, price, date.today(), prices)
                 ticker = self.invertedTickerMap[ticker] if ticker in self.invertedTickerMap else ticker
                 prices[(ticker, date.today())] = price
