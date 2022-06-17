@@ -69,6 +69,11 @@ class Price:
             price *= prices[("USD", dayBefore)]
             if price > 10000 and priceDate < datetime.date(year=2010,month=2,day=1):
                 price /= 50
+        if ticker.find("TEG") != -1:
+            lastDay = priceDate
+            while ("Euro", lastDay) not in prices:
+                lastDay = lastDay - datetime.timedelta(days = 1)
+            price *= prices[("Euro", lastDay)]  
         return price
 
     @staticmethod
