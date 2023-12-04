@@ -28,15 +28,19 @@ class yfPriceLoader(priceLoader):
             price *= 100
         if "BRK-B" in ticker:
             lastDay = priceDate
-            while ("USD", lastDay) not in prices:
+            killme=1000
+            while ("USD", lastDay) not in prices and killme > 0:
                 lastDay = lastDay - datetime.timedelta(days = 1)
+                killme -= 1
             price *= prices[("USD", lastDay)]
             if price > 10000 and priceDate < date(year=2010,month=2,day=1):
                 price /= 50
         if ticker.find("TEG") != -1:
             lastDay = priceDate
-            while ("Euro", lastDay) not in prices:
+            killme = 1000
+            while ("Euro", lastDay) not in prices and killme > 0:
                 lastDay = lastDay - datetime.timedelta(days = 1)
+                killme -= 1
             price *= prices[("Euro", lastDay)]  
         return price
         

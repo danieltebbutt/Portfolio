@@ -180,7 +180,7 @@ class transaction:
             pass
         elif self.action == "RIGHTS":
             shares += self.number
-            cash -= self.price
+            cash -= self.number * self.price + self.comm
         elif self.action == "SCRIP":
             shares += self.number
         else:
