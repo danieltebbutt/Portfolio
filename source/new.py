@@ -55,7 +55,7 @@ def createHistory(portfolioFile = None,
         detailed_log.write("Building history\n")
 
     # Hard code currency list.  !! Should pick these out of investments really.
-    currencyList = ["USD", "Euro", "NOK"]
+    currencyList = ["USD", "Euro", "NOK", "SEK"]
 
     # Build a history of our transactions
     history = History(transactions)

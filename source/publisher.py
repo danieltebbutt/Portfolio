@@ -170,7 +170,10 @@ class publisher(object):
                             profit))
             
             # Annual profit
-            profit = 100 * ((1 + (holding.activeProfit() / holding.activeCost())) ** (365.0 / holding.averageHoldingPeriod()) - 1)
+            if holding.averageHoldingPeriod() == 0:
+                profit = 0
+            else:
+                profit = 100 * ((1 + (holding.activeProfit() / holding.activeCost())) ** (365.0 / holding.averageHoldingPeriod()) - 1)
             outputfile.write("<TD><FONT COLOR=\"%s\">%.1f%%</FONT></TD>"%(
                             ("#008000" if profit > 0 else "#800000"), 
                             profit))

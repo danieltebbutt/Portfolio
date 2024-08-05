@@ -17,14 +17,15 @@ class yfPriceLoader(priceLoader):
     tickerMap = {
         "Euro" : "EURGBP=X",
         "USD" : "USDGBP=X",
-        "NOK" : "NOKGBP=X"
+        "NOK" : "NOKGBP=X",
+        "SEK" : "SEKGBP=X"
     }
     invertedTickerMap =  {v: k for k, v in tickerMap.items()}
 
     def fixRawPrice(self, ticker, price, priceDate, prices):
         if "=X" in ticker:
             price *= 100
-        if "NWBD" in ticker:
+        if "NWBD" in ticker and price < 25:
             price *= 100
         if "BRK-B" in ticker:
             lastDay = priceDate
@@ -35,13 +36,20 @@ class yfPriceLoader(priceLoader):
             price *= prices[("USD", lastDay)]
             if price > 10000 and priceDate < date(year=2010,month=2,day=1):
                 price /= 50
-        if ticker.find("TEG") != -1:
+        if "TEG" in ticker or "GBL" in ticker:
             lastDay = priceDate
             killme = 1000
             while ("Euro", lastDay) not in prices and killme > 0:
                 lastDay = lastDay - datetime.timedelta(days = 1)
                 killme -= 1
             price *= prices[("Euro", lastDay)]  
+        if "KINV" in ticker:
+            lastDay = priceDate
+            killme = 1000
+            while ("SEK", lastDay) not in prices and killme > 0:
+                lastDay = lastDay - datetime.timedelta(days = 1)
+                killme -= 1
+            price *= prices[("SEK", lastDay)]
         return price
         
 

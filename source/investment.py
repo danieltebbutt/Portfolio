@@ -8,8 +8,8 @@ import os
 
 # A line from stocks.txt
 STOCK=re.compile('(?P<stock>[\w^.-]+),\s+(?P<sector>[\w\d.]+),\s+'\
-                 '(?P<class>[\w\d.]+),\s+(?P<region>[\w\d.]+),\s+(?P<size>[\w\d.]+),\s+(?P<estdivi>[\d.]+),\s+(?P<isin>[\w\d-]+),\s+(?P<name>[\d\w. \%<>\"=\/\&\[\]\:\=\?\+]+)\s*\n')
-FULLNAME=re.compile('<A HREF="(?P<url>[\d\w.\%=\/\&\[\]\:\=\?\+]+)">(?P<name>[\d\w. \%\"=\/\&\[\]\:\=\?\+]+)</A>')
+                 '(?P<class>[\w\d.]+),\s+(?P<region>[\w\d.]+),\s+(?P<size>[\w\d.]+),\s+(?P<estdivi>[\d.]+),\s+(?P<isin>[\w\d-]+),\s+(?P<name>[\d\w. \%<>\"=\/\&\[\]\:\=\?\+-]+)\s*\n')
+FULLNAME=re.compile('<A HREF="(?P<url>[\d\w.\%=\/\&\[\]\:\=\?\+]+)">(?P<name>[\d\w. \%\"=\/\&\[\]\:\=\?\+-]+)</A>')
 
 filename = os.path.normpath("./data/stocks.csv")
 

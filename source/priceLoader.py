@@ -40,6 +40,8 @@ class priceLoader(object):
             while ("Euro", lastDay) not in prices:
                 lastDay = lastDay - datetime.timedelta(days = 1)
             price *= prices[("Euro", lastDay)]            
+        if "NWBD" in ticker and price > 800:
+            price /= 100
         return price
 
     @abstractmethod
