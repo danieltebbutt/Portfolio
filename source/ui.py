@@ -179,7 +179,7 @@ class ui(object):
     def reload(self):
         # Create the complete portfolio history
         print("Building portfolio history...")
-        self.history, self.investments = port.createHistory()
+        self.history, self.investments = self.createHistory()
         print("Done")
         print("")
 
@@ -202,7 +202,7 @@ class ui(object):
         investments = investment.learn_investments(transactions, inputStream = stock_stream)
 
         # Hard code currency list.  !! Should pick these out of investments really.
-        currencyList = ["USD", "Euro", "NOK"]
+        currencyList = ["USD", "Euro", "NOK", "SEK"]
 
         # Build a history of our transactions
         history = History(transactions)
