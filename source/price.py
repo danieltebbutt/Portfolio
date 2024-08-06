@@ -11,26 +11,12 @@ import sys, traceback
 
 # REGULAR EXPRESSIONS
 
-# A line from Yahoo (portfolio)
-#YAHOODAY=re.compile('(?P<date>[\d-]+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>[\d.]+),'\
-#                    '(?P<close>[\d.]+),(?P<volume>[\d.]+),(?P<adjclose>[\d.]+)')
-
-YAHOODAY=re.compile('(?P<date>\d+-[A-Z][a-z][a-z]-\d+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>[\d.]+),'\
-                    '(?P<close>[\d.]+),(?P<volume>[\d.]+)')
-
-# A line from Yahoo (tracking)
-YAHOOSTOCK=re.compile('\"(?P<stock>[\w^.-]+)\",(?P<price>[\d.]+)[, +-/\d:PAM]*')
-
-# A line from oanda.com's exchange rate history
-OLD_EXCHANGE=re.compile('(?P<month>\d+)/(?P<day>\d+)/(?P<year>\d+),(?P<rate>[\d.]+)')
-EXCHANGE=re.compile('"(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)","(?P<rate>[\d.]+)"')
-
 # A line from OtherAssets.txt
-OTHERASSET=re.compile('(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s+(?P<date>\d+/\d+/\d+)\s+(?P<change>[\d.]+)\s*\n')
+OTHERASSET=re.compile(r'(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s+(?P<date>\d+/\d+/\d+)\s+(?P<change>[\d.]+)\s*\n')
 
 # save.csv
 LOCAL_PRICES = os.path.normpath("./data/save.csv")
-TEXTSAVE=re.compile('(?P<ticker>[\w^.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
+TEXTSAVE=re.compile(r'(?P<ticker>[\w^.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
 
 # PRICE SOURCES
 LATEST_PRICES_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"

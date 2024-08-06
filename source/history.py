@@ -7,7 +7,7 @@ import datetime
 from datetime import timedelta
 
 from transaction import transaction
-from newPortfolio import NewPortfolio
+from portfolio import portfolio
 
 class History:
 
@@ -16,12 +16,12 @@ class History:
         self.prices = prices
 
     def getPortfolio(self, portfolioDate):
-        portfolio = NewPortfolio(portfolioDate)
+        pf = portfolio(portfolioDate)
         for transaction in self.transactions:
             if transaction.date <= portfolioDate:
-                portfolio.applyTransaction(transaction)
-        portfolio.notePrices(self.prices)
-        return portfolio
+                pf.applyTransaction(transaction)
+        pf.notePrices(self.prices)
+        return pf
 
     def firstHeld(self, ticker):
         for transaction in self.transactions:
