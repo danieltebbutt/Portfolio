@@ -35,7 +35,7 @@ class yfPriceLoader(priceLoader):
             price *= prices[("USD", lastDay)]
             if price > 10000 and priceDate < date(year=2010,month=2,day=1):
                 price /= 50
-        if "TEG" in ticker or "GBL" in ticker:
+        if "TEG" in ticker or "GBL" in ticker or "EXO" in ticker or "MF.PA" in ticker:
             lastDay = priceDate
             killme = 1000
             while ("Euro", lastDay) not in prices and killme > 0:

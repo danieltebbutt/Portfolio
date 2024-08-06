@@ -17,10 +17,9 @@ from price import Price
 from transaction import transaction
 from history import History
 from investment import investment
-from urlcache import urlcache
 from yfPriceLoader import yfPriceLoader
 
-from .ui import ui
+from ui import ui
 
 class webui(ui):
 

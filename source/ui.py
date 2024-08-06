@@ -17,7 +17,6 @@ from price import Price
 from transaction import transaction
 from history import History
 from investment import investment
-from urlcache import urlcache
 from yfPriceLoader import yfPriceLoader
 
 class ui(object):
@@ -46,7 +45,6 @@ class ui(object):
             "income"       : (self.income, "All dividends received"),
             "comparedates" : (self.compareDates, "Compare two dates", "<earlier date> <later date>"),
             "compare"      : (self.compareDates, "=compareDates"),
-            "compareshare" : (self.compareShare, "Compare portfolio with share or index", "<ticker>"),
             "capital"      : (self.capitalGain, "Capital gain/loss summary"),
             "tax"          : (self.tax, "Tax details for a given year", "<year>"),
             "print"        : (self.summary, "=summary"),
@@ -114,41 +112,6 @@ class ui(object):
             endDate = date.today()
 
         screenOutput.portfolioDiff(startDate, endDate, self.history)
-
-    def compareShare(self, ticker):
-        # Get price info about the ticker
-        newPrices = {}
-        Price.loadHistoricalPricesFromDisk(newPrices)
-        urlCache, currencyInfo, tickerInfoList = cacheUrls([ticker], [], [], None, self.history.transactions[0].date, newPrices, forceReload = True)
-        Price.loadCurrentPricesFromWeb([ticker], newPrices, urlCache)
-        for tickerInfo in tickerInfoList:
-            Price.loadHistoricalPricesFromWeb(tickerInfo[0], tickerInfo[1], tickerInfo[2], newPrices, urlCache)
-        Price.fixPriceGaps(newPrices)
-        #urlCache.clean_urls()
-
-        # Generate a new portfolio file with all tickers replaced with this one.
-        newTransactions = []
-        for tran in self.history.transactions:
-            if tran.action == "BUY" or tran.action == "SELL":
-                newTran = copy.copy(tran)
-                newTran.ticker = ticker
-                value = newTran.number * newTran.price
-                newTran.price = newPrices[(ticker, tran.date)]
-                newTran.number = value / newTran.price
-                newTransactions.append(newTran)
-        transaction.writeTransactions(newTransactions, TEMP_PORTFOLIO)
-
-        # Now build an alternate history based on these new transactions
-        print("Building portfolio history...")
-        newHistory, newInvestments = self.createHistory(TEMP_PORTFOLIO, forceReload = True)
-        print("Done")
-        print("")
-        newPortfolio = newHistory.getPortfolio(date.today())
-
-        # And print some info
-        print("Hypothetical / real capital gain:   \N{pound sign}%.2f / \N{pound sign}%.2f"%(newPortfolio.capitalGain() / 100, self.portfolio.capitalGain() / 100))
-        print("Real portfolio dividends received:  \N{pound sign}%.2f"%(self.portfolio.totalDividends() / 100))
-        print("Real portfolio yield:                %.2f%%"%(((self.portfolio.totalDividends() * 365.0 / (self.history.endDate() - self.history.startDate()).days)) * 100 / self.history.averageValue(self.history.startDate(), self.history.endDate())))
 
     def runCommand(self, command, outputStream = None):
         # Handle redirection of stdout to file
