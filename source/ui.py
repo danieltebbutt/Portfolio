@@ -12,26 +12,13 @@ from datetime import datetime
 from datetime import date
 from datetime import timedelta
 
-from .screenOutput import screenOutput
-from .price import Price
-from .transaction import transaction
-from .history import History
-from .investment import investment
-from .urlcache import urlcache
-from .amazonPublisher import amazonPublisher
-from .yfPriceLoader import yfPriceLoader
-
-# Hack to workaround Python SSL bug
-import ssl
-from functools import wraps
-def sslwrap(func):
-    @wraps(func)
-    def bar(*args, **kw):
-        kw['ssl_version'] = ssl.PROTOCOL_TLSv1
-        return func(*args, **kw)
-    return bar
-ssl.wrap_socket = sslwrap(ssl.wrap_socket)
-# End hack
+from screenOutput import screenOutput
+from price import Price
+from transaction import transaction
+from history import History
+from investment import investment
+from urlcache import urlcache
+from yfPriceLoader import yfPriceLoader
 
 class ui(object):
 
@@ -210,8 +197,8 @@ class ui(object):
         screenOutput.capitalGain(self.portfolio)
 
     def publish(self):
-        awsPublisher = amazonPublisher(self.history, self.portfolio, self.investments)
-        awsPublisher.mainPage()
+        # TODO
+        return
 
     def tax(self, year):
         screenOutput.tax(self.history, self.investments, int(year))

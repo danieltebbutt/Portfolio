@@ -1,9 +1,9 @@
 #
 # All output to screen
 #
-from .transaction import transaction
-from .holding import Holding
-from .purchase import purchase
+from transaction import transaction
+from holding import Holding
+from purchase import purchase
 import datetime
 
 class screenOutput:

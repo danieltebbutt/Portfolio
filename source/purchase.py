@@ -1,4 +1,4 @@
-from .transaction import transaction
+from transaction import transaction
 from datetime import datetime
 
 class purchase:

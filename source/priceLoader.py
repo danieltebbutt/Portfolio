@@ -6,12 +6,11 @@ import os
 import datetime
 import re
 import operator
-from forex_python.converter import CurrencyRates
 import json
 import sys, traceback
 from abc import ABCMeta, abstractmethod
 
-from .price import Price
+from price import Price
 
 class priceLoader(object):
 

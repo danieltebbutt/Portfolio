@@ -1,7 +1,7 @@
 # A portfolio is a collection of shares
 
-from .transaction import transaction
-from .holding import Holding
+from transaction import transaction
+from holding import Holding
 
 class NewPortfolio:
 

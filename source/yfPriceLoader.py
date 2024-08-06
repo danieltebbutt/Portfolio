@@ -5,12 +5,11 @@ import os
 from datetime import datetime, date
 import re
 import operator
-from forex_python.converter import CurrencyRates
 import json
 import sys, traceback
 import yfinance as yf
 
-from .priceLoader import priceLoader
+from priceLoader import priceLoader
 
 class yfPriceLoader(priceLoader):
 
@@ -55,7 +54,7 @@ class yfPriceLoader(priceLoader):
 
     def getCurrentPrices(self, prices):
         allTickers = [ self.tickerMap[x] if x in self.tickerMap else x for x in self.currencyTickerList + self.stockTickerList ]
-        data = yf.download(allTickers, period='5d')
+        data = yf.download(allTickers, period='1mo')
         for ticker in allTickers:
             try:
                 price = float(data.apply(lambda x: x[x.notnull()].values[-1])['Close'][ticker])

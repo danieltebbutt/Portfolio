@@ -6,7 +6,6 @@ import os
 import datetime
 import re
 import operator
-from forex_python.converter import CurrencyRates
 import json
 import sys, traceback
 
@@ -226,8 +225,7 @@ class Price:
     def loadHistoricalPricesFromDisk(prices, file = LOCAL_PRICES, inputStream = None):
         if not inputStream:
             inputStream = open(file)
-        for line_bytes in inputStream:
-            line = line_bytes.decode("utf-8")
+        for line in inputStream:
             parsedline = TEXTSAVE.match(line)
             if parsedline != None:
                 ticker = parsedline.group('ticker')
