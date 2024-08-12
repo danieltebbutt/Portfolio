@@ -56,3 +56,5 @@ output/*
 cache/*
 templates/private*
 source/*.pyc
+*.json
+*.html

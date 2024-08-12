@@ -18,6 +18,7 @@ from transaction import transaction
 from history import History
 from investment import investment
 from yfPriceLoader import yfPriceLoader
+from jsonPublisher import jsonPublisher
 
 class ui(object):
 
@@ -53,12 +54,11 @@ class ui(object):
             "shareinfo"    : (self.shareInfo, "Info on a particular share", "<ticker> [startDate] [endDate]"),
 
             # Publish/write
-            "publish"      : (self.publish, "Publish to web"),
+            "publish"      : (self.publish, "Publish to json"),
             "tidy"         : (self.tidy, "Tidy local price database"),
             "dividend"     : (self.dividend, "Record dividend transaction", "<ticker> <Ex-div-date> <Div-date> <Per-share-amount>"),
             "sell"         : (self.sell, "Record sell transaction", "<ticker> <Sale-date> <Number> <Price> <Commission>"),
             "buy"          : (self.buy, "Record buy transaction", "<ticker> <Buy-date> <Number> <Price> <Commission>"),
-            "sync"         : (self.sync, "Sync portfolio to web"),
         }
 
     def interactive(self):
@@ -160,7 +160,9 @@ class ui(object):
         screenOutput.capitalGain(self.portfolio)
 
     def publish(self):
-        # TODO
+        pub = jsonPublisher(self.history, self.portfolio, self.investments)
+        pub.publishPublic(open("public.json", "w"))
+        pub.publishPrivate(open("private.json", "w"))
         return
 
     def tax(self, year):
@@ -296,9 +298,5 @@ class ui(object):
             endDate = datetime.strptime(endDateString, "%Y-%m-%d").date()
 
         screenOutput.shareInfo(self.history, ticker, startDate, endDate)
-
-    def sync(self):
-        dir, file = transaction.dirAndFile()
-        newPublish.upload(dir, file)
 
 
