@@ -76,7 +76,11 @@ class History:
             yield portfolio
             currentDate += timedelta(days = 1)
 
-    def basisForReturn(self, startDate, endDate):
+    def basisForReturn(self, startDate = None, endDate = None):
+        if not startDate:
+            startDate = self.startDate()
+        if not endDate:
+            endDate = self.endDate()
         numerator = 0
         portfolio = self.getPortfolio(startDate)
         modifier = portfolio.value() - portfolio.netInvested()

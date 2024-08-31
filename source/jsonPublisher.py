@@ -12,6 +12,7 @@ import posixpath
 from abc import ABCMeta, abstractmethod
 import configparser
 import json
+from itertools import chain
 
 class jsonPublisher(object):
 
@@ -67,6 +68,22 @@ class jsonPublisher(object):
             item["date sold"] = [ d.strftime("%d %b %Y") for d in purchase.date_sold ]
 
             data["previous"].append(item)
+
+        data["overtime"] = []
+        totalDays = datetime.date.today() - self.history.startDate()
+            
+        basis = self.history.basisForReturn()
+        for days in chain(range(0, totalDays.days - 365, 28), 
+                          range(totalDays.days - 365, totalDays.days - 50, 7),
+                          range(totalDays.days - 50, totalDays.days, 1)):
+            date = self.history.startDate() + datetime.timedelta(days = days)
+            item = {}
+            item["date"] = date.strftime("%d %b %Y")
+            item["profit"] = 100 * self.history.getPortfolio(date).totalProfit() / basis
+            item["size"] = 100 * self.history.getPortfolio(date).totalValue() / basis
+            item["invested"] = 100 * self.history.getPortfolio(date).netInvested() / basis
+
+            data["overtime"].append(item)
 
         json.dump(data, outputStream)
 
