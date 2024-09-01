@@ -10,7 +10,7 @@ import json
 import sys, traceback
 from abc import ABCMeta, abstractmethod
 
-from price import Price
+from .price import Price
 
 class priceLoader(object):
 

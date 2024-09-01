@@ -1,7 +1,7 @@
 # A holding is an individual shareholding
 
-from transaction import transaction
-from purchase import purchase
+from .transaction import transaction
+from .purchase import purchase
 import math
 
 class Holding:

@@ -6,8 +6,8 @@ import re
 import datetime
 from datetime import timedelta
 
-from transaction import transaction
-from portfolio import portfolio
+from .transaction import transaction
+from .portfolio import portfolio
 
 class History:
 

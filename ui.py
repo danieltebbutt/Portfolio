@@ -12,13 +12,13 @@ from datetime import datetime
 from datetime import date
 from datetime import timedelta
 
-from screenOutput import screenOutput
-from price import Price
-from transaction import transaction
-from history import History
-from investment import investment
-from yfPriceLoader import yfPriceLoader
-from jsonPublisher import jsonPublisher
+from .screenOutput import screenOutput
+from .price import Price
+from .transaction import transaction
+from .history import History
+from .investment import investment
+from .yfPriceLoader import yfPriceLoader
+from .jsonPublisher import jsonPublisher
 
 class ui(object):
 
@@ -159,10 +159,10 @@ class ui(object):
     def capitalGain(self):
         screenOutput.capitalGain(self.portfolio)
 
-    def publish(self):
+    def publish(self, publicStream = None, privateStream = None):
         pub = jsonPublisher(self.history, self.portfolio, self.investments)
-        pub.publishPublic(open("public.json", "w"))
-        pub.publishPrivate(open("private.json", "w"))
+        pub.publishPublic(publicStream if publicStream else open("public.json", "w"))
+        pub.publishPrivate(privateStream if privateStream else open("private.json", "w"))
         return
 
     def tax(self, year):
@@ -185,9 +185,6 @@ class ui(object):
         print("Done")
         print("")
 
-        # Get today's portfolio
-        self.portfolio = self.history.getPortfolio(date.today())
-
     def createHistory(self,
                     portfolioFile = None, 
                     forceReload = False,
@@ -197,24 +194,24 @@ class ui(object):
                     update_data = True,
                     price_out_stream = None):
         # Read all transactions from disk
-        transactions = transaction.readTransactions(inputFile = portfolioFile, inputStream = portfolio_stream)
-        startDate = transactions[0].date
+        self.transactions = transaction.readTransactions(inputFile = portfolioFile, inputStream = portfolio_stream)
+        startDate = self.transactions[0].date
 
         # And all investments
-        investments = investment.learn_investments(transactions, inputStream = stock_stream)
+        self.investments = investment.learn_investments(self.transactions, inputStream = stock_stream)
 
         # Hard code currency list.  !! Should pick these out of investments really.
         currencyList = ["USD", "Euro", "NOK", "SEK"]
 
         # Build a history of our transactions
-        history = History(transactions)
+        self.history = History(self.transactions)
 
         # Load what we've got from disk
         prices = {}
         Price.loadHistoricalPricesFromDisk(prices, inputStream = price_stream)
 
         if update_data:
-            tickerList = history.currentTickers()
+            tickerList = self.history.currentTickers()
             loader = yfPriceLoader(tickerList, currencyList)
             loader.getCurrentPrices(prices)
 
@@ -225,12 +222,15 @@ class ui(object):
             Price.savePricesToDisk(prices, outStream = price_out_stream)
 
         # Fill in any gaps between the last noted price and today
-        Price.fixLastPrices(prices, history.currentTickers())
+        Price.fixLastPrices(prices, self.history.currentTickers())
 
         # Give the prices to our history
-        history.notePrices(prices)
+        self.history.notePrices(prices)
 
-        return (history, investments)
+        # Get today's portfolio
+        self.portfolio = self.history.getPortfolio(date.today())        
+
+        return (self.history, self.investments)
 
     def dividend(self, ticker, textExdivDate, textDivDate, textPerShareAmount):
         # Parse dates
@@ -245,6 +245,8 @@ class ui(object):
 
         numberHeld = self.portfolio.holdings[ticker].number
 
+        if self.portfolioStream:
+            self.portfolioStream.seek(0, 2)
         transaction.writeTransaction(ticker, exdivDate, numberHeld, "EXDIV", perShareAmount, 0, outputStream = self.portfolioStream)
         transaction.writeTransaction(ticker, divDate, numberHeld, "DIV", perShareAmount, 0, outputStream = self.portfolioStream)
 
@@ -263,6 +265,8 @@ class ui(object):
         commission = float(textCommission)
         number = float(textNumber)
 
+        if self.portfolioStream:
+            self.portfolioStream.seek(0, 2)
         transaction.writeTransaction(ticker, saleDate, number, "SELL", perShareAmount, commission, outputStream = self.portfolioStream)
 
         self.reload()
@@ -279,6 +283,8 @@ class ui(object):
         commission = float(textCommission)
         number = float(textNumber)
 
+        if self.portfolioStream:
+            self.portfolioStream.seek(0, 2)
         transaction.writeTransaction(ticker, buyDate, number, "BUY", perShareAmount, commission, outputStream = self.portfolioStream)
 
         self.reload()

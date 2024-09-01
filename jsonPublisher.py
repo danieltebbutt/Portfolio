@@ -88,7 +88,80 @@ class jsonPublisher(object):
         json.dump(data, outputStream)
 
     def publishPrivate(self, outputStream):
-        pass
+        data = {}
+        data["current"] = []
+        for ticker in sorted(self.portfolio.currentTickers(), key=lambda x: self.portfolio.holdings[x].value(), reverse = True):
+            holding = self.portfolio.holdings[ticker]
+            
+            item = {}
+            item["ticker"] = ticker
+            item["number"] = holding.number
+            item["cost"] = holding.activeCost() / 100
+            item["value"] = holding.currentValue() / 100
+            item["dividends"] = holding.totalDividends() / 100
+            item["capital gain"] = (holding.currentValue() - holding.activeCost()) / 100
+            item["profit"] = holding.activeProfit() / 100
+        
+            data["current"].append(item)
+
+        # Provide data per-year and for the last 90, 30, 7 and 2 days
+        date_pairs = [("all", self.history.startDate(),datetime.date.today())]
+        for year in range(self.history.startDate().year, datetime.date.today().year):
+            date_pairs.append(("%d"%year,
+                               datetime.date(year=year, month=1, day=1), 
+                               datetime.date(year=year + 1, month=1, day=1)))
+        date_pairs.append(("%d"%datetime.date.today().year,
+                           datetime.date(year=datetime.date.today().year, month=1, day=1),
+                           datetime.date.today()))
+        for period in 90, 30, 7, 1:
+            date_pairs.append(("%d days"%period,datetime.date.today() - datetime.timedelta(days = period + 1), datetime.date.today() - datetime.timedelta(days = 1)))
+        
+        data["periods"] = {}
+
+        for period, startDate, endDate in date_pairs:
+            startPortfolio = self.history.getPortfolio(startDate)
+            endPortfolio = self.history.getPortfolio(endDate)
+
+            totalProfit = (endPortfolio.totalProfit() - startPortfolio.totalProfit()) / 100
+            basisForReturn = self.history.basisForReturn(startDate, endDate) / 100
+            percent_return = 100 * totalProfit / basisForReturn
+            capital_gain = (endPortfolio.capitalGain() - startPortfolio.capitalGain()) / 100
+
+            item = {}
+            item["period"] = period
+            item["profit"] = totalProfit
+            item["basis"] = basisForReturn
+            item["return"] = percent_return
+            item["capital"] = capital_gain
+            item["dividends"] = (endPortfolio.totalDividends() - startPortfolio.totalDividends()) / 100
+            item["holdings"] = []
+
+            for ticker, endHolding in endPortfolio.holdings.items():
+                startHolding = None
+                if ticker in startPortfolio.holdings:
+                    startHolding = startPortfolio.holdings[ticker]
+                    
+                if not startHolding:
+                    startProfit = 0
+                    startCapitalGain = 0
+                    startTotalDividends = 0
+                elif startHolding.profit() != endHolding.profit() or startHolding.number != 0 or endHolding.number != 0:
+                    startProfit = startHolding.profit()
+                    startCapitalGain = startHolding.capitalGain()
+                    startTotalDividends = startHolding.totalDividends()
+                else:
+                    startProfit = None
+                    
+                if startProfit != None:
+                    item["holdings"].append(
+                        { "ticker"    : ticker,
+                          "capital"   : (endHolding.capitalGain() - startCapitalGain) / 100,
+                          "dividends" : (endHolding.totalDividends() - startTotalDividends) / 100,
+                          "profit"    : (endHolding.profit() - startProfit) / 100 } )
+
+            data["periods"][period] = item
+
+        json.dump(data, outputStream)
  
     def getYearReturns(self, ticker):
         returns = []

@@ -9,7 +9,7 @@ import json
 import sys, traceback
 import yfinance as yf
 
-from priceLoader import priceLoader
+from .priceLoader import priceLoader
 
 class yfPriceLoader(priceLoader):
 
