@@ -17,21 +17,8 @@ from .price import Price
 from .transaction import transaction
 from .history import History
 from .investment import investment
-from .urlcache import urlcache
-from .amazonPublisher import amazonPublisher
 from .yfPriceLoader import yfPriceLoader
-
-# Hack to workaround Python SSL bug
-import ssl
-from functools import wraps
-def sslwrap(func):
-    @wraps(func)
-    def bar(*args, **kw):
-        kw['ssl_version'] = ssl.PROTOCOL_TLSv1
-        return func(*args, **kw)
-    return bar
-ssl.wrap_socket = sslwrap(ssl.wrap_socket)
-# End hack
+from .jsonPublisher import jsonPublisher
 
 class ui(object):
 
@@ -59,7 +46,6 @@ class ui(object):
             "income"       : (self.income, "All dividends received"),
             "comparedates" : (self.compareDates, "Compare two dates", "<earlier date> <later date>"),
             "compare"      : (self.compareDates, "=compareDates"),
-            "compareshare" : (self.compareShare, "Compare portfolio with share or index", "<ticker>"),
             "capital"      : (self.capitalGain, "Capital gain/loss summary"),
             "tax"          : (self.tax, "Tax details for a given year", "<year>"),
             "print"        : (self.summary, "=summary"),
@@ -68,12 +54,11 @@ class ui(object):
             "shareinfo"    : (self.shareInfo, "Info on a particular share", "<ticker> [startDate] [endDate]"),
 
             # Publish/write
-            "publish"      : (self.publish, "Publish to web"),
+            "publish"      : (self.publish, "Publish to json"),
             "tidy"         : (self.tidy, "Tidy local price database"),
             "dividend"     : (self.dividend, "Record dividend transaction", "<ticker> <Ex-div-date> <Div-date> <Per-share-amount>"),
             "sell"         : (self.sell, "Record sell transaction", "<ticker> <Sale-date> <Number> <Price> <Commission>"),
             "buy"          : (self.buy, "Record buy transaction", "<ticker> <Buy-date> <Number> <Price> <Commission>"),
-            "sync"         : (self.sync, "Sync portfolio to web"),
         }
 
     def interactive(self):
@@ -128,41 +113,6 @@ class ui(object):
 
         screenOutput.portfolioDiff(startDate, endDate, self.history)
 
-    def compareShare(self, ticker):
-        # Get price info about the ticker
-        newPrices = {}
-        Price.loadHistoricalPricesFromDisk(newPrices)
-        urlCache, currencyInfo, tickerInfoList = cacheUrls([ticker], [], [], None, self.history.transactions[0].date, newPrices, forceReload = True)
-        Price.loadCurrentPricesFromWeb([ticker], newPrices, urlCache)
-        for tickerInfo in tickerInfoList:
-            Price.loadHistoricalPricesFromWeb(tickerInfo[0], tickerInfo[1], tickerInfo[2], newPrices, urlCache)
-        Price.fixPriceGaps(newPrices)
-        #urlCache.clean_urls()
-
-        # Generate a new portfolio file with all tickers replaced with this one.
-        newTransactions = []
-        for tran in self.history.transactions:
-            if tran.action == "BUY" or tran.action == "SELL":
-                newTran = copy.copy(tran)
-                newTran.ticker = ticker
-                value = newTran.number * newTran.price
-                newTran.price = newPrices[(ticker, tran.date)]
-                newTran.number = value / newTran.price
-                newTransactions.append(newTran)
-        transaction.writeTransactions(newTransactions, TEMP_PORTFOLIO)
-
-        # Now build an alternate history based on these new transactions
-        print("Building portfolio history...")
-        newHistory, newInvestments = self.createHistory(TEMP_PORTFOLIO, forceReload = True)
-        print("Done")
-        print("")
-        newPortfolio = newHistory.getPortfolio(date.today())
-
-        # And print some info
-        print("Hypothetical / real capital gain:   \N{pound sign}%.2f / \N{pound sign}%.2f"%(newPortfolio.capitalGain() / 100, self.portfolio.capitalGain() / 100))
-        print("Real portfolio dividends received:  \N{pound sign}%.2f"%(self.portfolio.totalDividends() / 100))
-        print("Real portfolio yield:                %.2f%%"%(((self.portfolio.totalDividends() * 365.0 / (self.history.endDate() - self.history.startDate()).days)) * 100 / self.history.averageValue(self.history.startDate(), self.history.endDate())))
-
     def runCommand(self, command, outputStream = None):
         # Handle redirection of stdout to file
         file = None
@@ -209,9 +159,11 @@ class ui(object):
     def capitalGain(self):
         screenOutput.capitalGain(self.portfolio)
 
-    def publish(self):
-        awsPublisher = amazonPublisher(self.history, self.portfolio, self.investments)
-        awsPublisher.mainPage()
+    def publish(self, publicStream = None, privateStream = None):
+        pub = jsonPublisher(self.history, self.portfolio, self.investments)
+        pub.publishPublic(publicStream if publicStream else open("public.json", "w"))
+        pub.publishPrivate(privateStream if privateStream else open("private.json", "w"))
+        return
 
     def tax(self, year):
         screenOutput.tax(self.history, self.investments, int(year))
@@ -229,12 +181,9 @@ class ui(object):
     def reload(self):
         # Create the complete portfolio history
         print("Building portfolio history...")
-        self.history, self.investments = port.createHistory()
+        self.history, self.investments = self.createHistory()
         print("Done")
         print("")
-
-        # Get today's portfolio
-        self.portfolio = self.history.getPortfolio(date.today())
 
     def createHistory(self,
                     portfolioFile = None, 
@@ -245,24 +194,24 @@ class ui(object):
                     update_data = True,
                     price_out_stream = None):
         # Read all transactions from disk
-        transactions = transaction.readTransactions(inputFile = portfolioFile, inputStream = portfolio_stream)
-        startDate = transactions[0].date
+        self.transactions = transaction.readTransactions(inputFile = portfolioFile, inputStream = portfolio_stream)
+        startDate = self.transactions[0].date
 
         # And all investments
-        investments = investment.learn_investments(transactions, inputStream = stock_stream)
+        self.investments = investment.learn_investments(self.transactions, inputStream = stock_stream)
 
         # Hard code currency list.  !! Should pick these out of investments really.
-        currencyList = ["USD", "Euro", "NOK"]
+        currencyList = ["USD", "Euro", "NOK", "SEK"]
 
         # Build a history of our transactions
-        history = History(transactions)
+        self.history = History(self.transactions)
 
         # Load what we've got from disk
         prices = {}
         Price.loadHistoricalPricesFromDisk(prices, inputStream = price_stream)
 
         if update_data:
-            tickerList = history.currentTickers()
+            tickerList = self.history.currentTickers()
             loader = yfPriceLoader(tickerList, currencyList)
             loader.getCurrentPrices(prices)
 
@@ -273,12 +222,15 @@ class ui(object):
             Price.savePricesToDisk(prices, outStream = price_out_stream)
 
         # Fill in any gaps between the last noted price and today
-        Price.fixLastPrices(prices, history.currentTickers())
+        Price.fixLastPrices(prices, self.history.currentTickers())
 
         # Give the prices to our history
-        history.notePrices(prices)
+        self.history.notePrices(prices)
 
-        return (history, investments)
+        # Get today's portfolio
+        self.portfolio = self.history.getPortfolio(date.today())        
+
+        return (self.history, self.investments)
 
     def dividend(self, ticker, textExdivDate, textDivDate, textPerShareAmount):
         # Parse dates
@@ -293,6 +245,8 @@ class ui(object):
 
         numberHeld = self.portfolio.holdings[ticker].number
 
+        if self.portfolioStream:
+            self.portfolioStream.seek(0, 2)
         transaction.writeTransaction(ticker, exdivDate, numberHeld, "EXDIV", perShareAmount, 0, outputStream = self.portfolioStream)
         transaction.writeTransaction(ticker, divDate, numberHeld, "DIV", perShareAmount, 0, outputStream = self.portfolioStream)
 
@@ -311,6 +265,8 @@ class ui(object):
         commission = float(textCommission)
         number = float(textNumber)
 
+        if self.portfolioStream:
+            self.portfolioStream.seek(0, 2)
         transaction.writeTransaction(ticker, saleDate, number, "SELL", perShareAmount, commission, outputStream = self.portfolioStream)
 
         self.reload()
@@ -327,6 +283,8 @@ class ui(object):
         commission = float(textCommission)
         number = float(textNumber)
 
+        if self.portfolioStream:
+            self.portfolioStream.seek(0, 2)
         transaction.writeTransaction(ticker, buyDate, number, "BUY", perShareAmount, commission, outputStream = self.portfolioStream)
 
         self.reload()
@@ -346,9 +304,5 @@ class ui(object):
             endDate = datetime.strptime(endDateString, "%Y-%m-%d").date()
 
         screenOutput.shareInfo(self.history, ticker, startDate, endDate)
-
-    def sync(self):
-        dir, file = transaction.dirAndFile()
-        newPublish.upload(dir, file)
 
 

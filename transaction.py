@@ -9,8 +9,8 @@ import datetime
 
 class transaction:
 
-    TRANSACTION = re.compile('(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
-                            '(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
+    TRANSACTION = re.compile(r'(?P<stock>[\w^.-]+)\s+(?P<day>\d+)\s+(?P<month>\d+)\s+(?P<year>\d+)\s+'\
+                            r'(?P<number>[\d.]+)\s+(?P<action>\w+)\s+(?P<price>[\d.]+)\s+(?P<comm>[\d.]+)\s*\n')
 
     ACTIONS = ["BUY", "SELL", "RIGHTS", "DIV", "EXDIV", "SCRIP", "INT"]
 
@@ -28,15 +28,14 @@ class transaction:
             if inputFile:
                 portfolioFile = inputFile
             else:
-                portfolioFile = portfolio
+                portfolioFile = transaction.portfolio
 
             print(portfolioFile)
             inputStream = open(portfolioFile)
 
         transactions = []
 
-        for line_bytes in inputStream:
-            line = line_bytes.decode("utf-8")
+        for line in inputStream:
             if transaction.valid(line):
                 tran = transaction(line)
                 #if tran.date <= datetime.date.today():

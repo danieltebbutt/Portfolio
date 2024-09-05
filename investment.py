@@ -22,8 +22,7 @@ class investment:
         if not inputStream:
             inputStream = open(filename)
 
-        for line_bytes in inputStream:
-            line = line_bytes.decode("utf-8")
+        for line in inputStream:
             parsedline = STOCK.match(line)
             if parsedline != None:
                 stock=parsedline.group('stock')

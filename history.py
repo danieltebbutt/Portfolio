@@ -7,7 +7,7 @@ import datetime
 from datetime import timedelta
 
 from .transaction import transaction
-from .newPortfolio import NewPortfolio
+from .portfolio import portfolio
 
 class History:
 
@@ -16,12 +16,12 @@ class History:
         self.prices = prices
 
     def getPortfolio(self, portfolioDate):
-        portfolio = NewPortfolio(portfolioDate)
+        pf = portfolio(portfolioDate)
         for transaction in self.transactions:
             if transaction.date <= portfolioDate:
-                portfolio.applyTransaction(transaction)
-        portfolio.notePrices(self.prices)
-        return portfolio
+                pf.applyTransaction(transaction)
+        pf.notePrices(self.prices)
+        return pf
 
     def firstHeld(self, ticker):
         for transaction in self.transactions:
@@ -76,7 +76,11 @@ class History:
             yield portfolio
             currentDate += timedelta(days = 1)
 
-    def basisForReturn(self, startDate, endDate):
+    def basisForReturn(self, startDate = None, endDate = None):
+        if not startDate:
+            startDate = self.startDate()
+        if not endDate:
+            endDate = self.endDate()
         numerator = 0
         portfolio = self.getPortfolio(startDate)
         modifier = portfolio.value() - portfolio.netInvested()

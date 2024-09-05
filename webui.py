@@ -17,8 +17,6 @@ from .price import Price
 from .transaction import transaction
 from .history import History
 from .investment import investment
-from .urlcache import urlcache
-from .amazonPublisher import amazonPublisher
 from .yfPriceLoader import yfPriceLoader
 
 from .ui import ui
@@ -28,8 +26,9 @@ class webui(ui):
     def __init__(self, history, portfolio, investments, portfolioStream):
         super(webui, self).__init__(history, portfolio, investments)
         self.portfolioStream = portfolioStream
-        for command in [ "eval", "interactive", "exit", "debug", "reload", "publish", "tidy", "sync" ]:
-            del self.commands[command]
+        for command in [ "eval", "interactive", "exit", "debug", "reload", "publish", "tidy" ]:
+            if command in self.commands:
+                del self.commands[command]
 
     def reload(self):
         pass

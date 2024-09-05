@@ -3,7 +3,7 @@
 from .transaction import transaction
 from .holding import Holding
 
-class NewPortfolio:
+class portfolio:
 
     def __init__(self, date):
         self.holdings = {}

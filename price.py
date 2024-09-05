@@ -6,32 +6,17 @@ import os
 import datetime
 import re
 import operator
-from forex_python.converter import CurrencyRates
 import json
 import sys, traceback
 
 # REGULAR EXPRESSIONS
 
-# A line from Yahoo (portfolio)
-#YAHOODAY=re.compile('(?P<date>[\d-]+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>[\d.]+),'\
-#                    '(?P<close>[\d.]+),(?P<volume>[\d.]+),(?P<adjclose>[\d.]+)')
-
-YAHOODAY=re.compile('(?P<date>\d+-[A-Z][a-z][a-z]-\d+),(?P<open>[\d.]+),(?P<high>[\d.]+),(?P<low>[\d.]+),'\
-                    '(?P<close>[\d.]+),(?P<volume>[\d.]+)')
-
-# A line from Yahoo (tracking)
-YAHOOSTOCK=re.compile('\"(?P<stock>[\w^.-]+)\",(?P<price>[\d.]+)[, +-/\d:PAM]*')
-
-# A line from oanda.com's exchange rate history
-OLD_EXCHANGE=re.compile('(?P<month>\d+)/(?P<day>\d+)/(?P<year>\d+),(?P<rate>[\d.]+)')
-EXCHANGE=re.compile('"(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)","(?P<rate>[\d.]+)"')
-
 # A line from OtherAssets.txt
-OTHERASSET=re.compile('(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s+(?P<date>\d+/\d+/\d+)\s+(?P<change>[\d.]+)\s*\n')
+OTHERASSET=re.compile(r'(?P<name>[\w.-_]+)\s+(?P<type>\w+)\s+(?P<value>[\d.-]+)\s+(?P<date>\d+/\d+/\d+)\s+(?P<change>[\d.]+)\s*\n')
 
 # save.csv
 LOCAL_PRICES = os.path.normpath("./data/save.csv")
-TEXTSAVE=re.compile('(?P<ticker>[\w^.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
+TEXTSAVE=re.compile(r'(?P<ticker>[\w^.-]+),(?P<year>[\d]+)-(?P<month>[\d]+)-(?P<day>[\d]+),(?P<price>[\d.]+)')
 
 # PRICE SOURCES
 LATEST_PRICES_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=sl1d1t1c1ohgv&e=.csv"
@@ -129,105 +114,13 @@ class Price:
 
         url = LATEST_PRICES_URL % portfolioString
         return url
-    
-    @staticmethod
-    def currentPriceUrl(ticker):
-        alpha_key = open("./data/alpha_vantage.txt").readline()
-        url = ALPHA_CURRENT_URL%(ticker, alpha_key)
-        return url 
-
-    @staticmethod
-    def alphaKey():
-        return open("./data/alpha_vantage.txt").readline()
-
-    @staticmethod
-    def historicalPricesUrl(ticker, startDate, lastDate, currency = False):
-        urls = []
-        if not currency:
-            #urls.append(HISTORICAL_SHARE_PRICE_URL%(
-            #            ticker,
-            #            startDate.month - 1,
-            #            startDate.day,
-            #            startDate.year,
-            #            lastDate.month - 1,
-            #            lastDate.day,
-            #            lastDate.year))
-            urls.append(HISTORICAL_SHARE_PRICE_URL%(
-                        ticker,
-                        startDate.day,
-                        startDate.strftime('%b'),
-                        startDate.year,
-                        lastDate.day,
-                        lastDate.strftime('%b'),
-                        lastDate.year))
-        else: 
-            fixedTicker = "EUR" if ticker == "Euro" else ticker
-            urls.append(ALPHA_FX_URL%(fixedTicker, Price.alphaKey()))
-            print(urls[-1])
-
-        return urls
-
-    # Methods for loading and parsing info from the web
-    @staticmethod
-    def loadCurrentPricesFromWeb(tickerList, prices, urlCache):
-        for ticker in tickerList:
-            if ticker == "NWBD.L":
-                continue
-            url = Price.currentPriceUrl(ticker)
-            print(url)
-            try:
-                json_string = urlCache.read_url(url)
-                json_parsed = json.loads(json_string) 
-                price = float(json_parsed['Global Quote']['05. price'])
-                price = Price.fixRawPrice(ticker, price, datetime.date.today(), prices)
-                prices[(ticker, datetime.date.today())] = price
-            except Exception:
-                print("Error!")
-                traceback.print_exception(*sys.exc_info())
-
-
-        return prices
-
-    @staticmethod
-    def getCurrencyHistory(currency, startDate, endDate, prices, urlCache):
-        ticker = currency
-        if ticker == "Euro":
-            ticker = 'EUR'
-
-        url = Price.historicalPricesUrl(currency, startDate, endDate, True)[-1]
-
-        try: 
-            json_string = urlCache.read_url(url)
-            json_parsed = json.loads(json_string)
-            for day, data in json_parsed['Time Series FX (Daily)'].items():
-                 currencyDate = datetime.datetime.strptime(day, "%Y-%m-%d").date()
-                 price = float(data['4. close']) * 100
-                 prices[(currency, currencyDate)] = price
-        except Exception:
-            print("Error!")
-            traceback.print_exception(*sys.exc_info())
-
-    @staticmethod
-    def loadHistoricalPricesFromWeb(ticker, startDate, endDate, prices, urlCache):
-        url = Price.historicalPricesUrl(ticker, startDate, endDate, currency = False)[0]
-        html = urlCache.read_url(url)
-
-        for line in YAHOODAY.findall(html):
-            print(line)
-#            priceDate = datetime.datetime.strptime(line[0], "%Y-%m-%d").date()
-            priceDate = datetime.datetime.strptime(line[0], "%d-%b-%y").date()
-            closePrice = float(line[4])
-            closePrice = Price.fixRawPrice(ticker, closePrice, priceDate, prices)
-            if closePrice != 0:
-                prices[(ticker, priceDate)] = closePrice
 
     # For each investment, get its price history
     @staticmethod
     def loadHistoricalPricesFromDisk(prices, file = LOCAL_PRICES, inputStream = None):
         if not inputStream:
             inputStream = open(file)
-        for line_bytes in inputStream:
-            line = line_bytes.decode("utf-8")
+        for line in inputStream:
             parsedline = TEXTSAVE.match(line)
             if parsedline != None:
                 ticker = parsedline.group('ticker')
