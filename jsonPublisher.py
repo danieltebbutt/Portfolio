@@ -90,6 +90,7 @@ class jsonPublisher(object):
     def publishPrivate(self, outputStream):
         data = {}
         data["current"] = []
+
         for ticker in sorted(self.portfolio.currentTickers(), key=lambda x: self.portfolio.holdings[x].value(), reverse = True):
             holding = self.portfolio.holdings[ticker]
             
@@ -103,6 +104,14 @@ class jsonPublisher(object):
             item["profit"] = holding.activeProfit() / 100
         
             data["current"].append(item)
+
+
+        data["summary"] = {
+            "invested"    : self.portfolio.netInvested() / 100,
+            "value"       : self.portfolio.totalValue() / 100,
+            "capital gain": self.portfolio.capitalGain() / 100,
+            "profit"      :  self.portfolio.totalProfit() / 100
+        }
 
         # Provide data per-year and for the last 90, 30, 7 and 2 days
         date_pairs = [("all", self.history.startDate(),datetime.date.today())]
