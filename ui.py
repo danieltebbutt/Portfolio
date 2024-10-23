@@ -215,6 +215,11 @@ class ui(object):
             loader = yfPriceLoader(tickerList, currencyList)
             loader.getCurrentPrices(prices)
 
+            # Fill in initial prices
+            for t in self.transactions:
+                if (t.ticker, t.date) not in prices:
+                    prices[(t.ticker, t.date)] = t.price
+
             # Fill in any gaps
             Price.fixPriceGaps(prices)
 
