@@ -174,7 +174,9 @@ class jsonPublisher(object):
  
     def getYearReturns(self, ticker):
         returns = []
-        initialDate = self.portfolio.holdings[ticker].firstBought()    
+        initialDate = self.portfolio.holdings[ticker].firstBought()
+        if not initialDate:
+            return(0)
         for year in range(initialDate.year, datetime.date.today().year + 1):
             if year == initialDate.year:
                 firstDate = initialDate

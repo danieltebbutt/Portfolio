@@ -126,7 +126,10 @@ class Holding:
         for purchase in self.activePurchases():        
             numerator += purchase.number_left() * purchase.holdingPeriod()
             denominator += purchase.number_left()
-        return numerator / denominator
+        if denominator == 0:
+            return(0)
+        else:
+            return numerator / denominator
         
     def maxHoldingPeriod(self):
         maxPeriod = 0
